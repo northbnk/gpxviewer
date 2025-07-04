@@ -3,8 +3,11 @@
   <trk>
     <name>Example GPX</name>
     <trkseg>
-      <trkpt lat="35.0" lon="135.0"></trkpt>
-      <trkpt lat="35.1" lon="135.1"></trkpt>
+      <trkpt lat="35.0" lon="135.000"><ele>100</ele></trkpt>
+      <trkpt lat="35.0" lon="135.011"><ele>110</ele></trkpt>
+      <trkpt lat="35.0" lon="135.022"><ele>105</ele></trkpt>
+      <trkpt lat="35.0" lon="135.033"><ele>115</ele></trkpt>
+      <trkpt lat="35.0" lon="135.044"><ele>110</ele></trkpt>
     </trkseg>
   </trk>
 </gpx>
