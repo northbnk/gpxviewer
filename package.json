@@ -1,0 +1,16 @@
+{
+  "name": "gpxviewer",
+  "version": "1.0.0",
+  "description": "Simple Express application to upload a GPX file and show basic statistics.",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node test_gpxutils.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ejs": "^3.1.9",
+    "multer": "^1.4.5"
+  }
+}
