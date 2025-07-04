@@ -10,12 +10,12 @@ It draws the track and an elevation profile using Chart.js loaded from a CDN.
    ```bash
    npm install
    ```
-2. Set a Google Maps API key in the environment so the map can load. If the key is not provided the result page shows a warning and the map will not appear, but the elevation chart will still be drawn:
+2. Set a Google Maps API key in the environment so the map can load. The key can be provided via the `GOOGLE_MAPS_API_KEY` variable (or the legacy `GOOGLEMAPS_API_KEY`). If the key is not present the result page shows a red warning and the map will not appear, but the elevation chart will still be drawn:
    ```bash
    export GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE
    ```
-3. Run the server:
+3. Run the server (it listens on port 8180 by default):
    ```bash
    node app.js
    ```
-4. Open `http://localhost:5000` in your browser and upload a `.gpx` file.
+4. Open `http://localhost:8180` in your browser and upload a `.gpx` file.
