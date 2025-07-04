@@ -12,15 +12,18 @@ function haversine(lat1, lon1, lat2, lon2) {
 
 function parseGpx(text) {
   const trackpoints = [];
-  const regex = /<trkpt[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*(?:>(.*?)<\/trkpt>|\/>)/gs;
+  const regex = /<trkpt\b([^>]*)(?:\/>|>([\s\S]*?)<\/trkpt>)/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
+    const attrs = match[1];
+    const content = match[2] || '';
+    const latMatch = /lat="([^"]+)"/.exec(attrs);
+    const lonMatch = /lon="([^"]+)"/.exec(attrs);
+    if (!latMatch || !lonMatch) continue;
     let ele = null;
-    if (match[3]) {
-      const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(match[3]);
-      if (eleMatch) ele = parseFloat(eleMatch[1]);
-    }
-    trackpoints.push([parseFloat(match[1]), parseFloat(match[2]), ele]);
+    const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(content);
+    if (eleMatch) ele = parseFloat(eleMatch[1]);
+    trackpoints.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele]);
   }
   const stats = { points: trackpoints.length };
   if (trackpoints.length > 0) {
