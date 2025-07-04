@@ -6,3 +6,4 @@ def test_parse():
         stats = gpxutils.parse_gpx(f)
     assert stats['points'] == 2
     assert round(stats['distance_m'], 1) > 0
+    assert len(stats['trackpoints']) == 2

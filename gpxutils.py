@@ -39,4 +39,5 @@ def parse_gpx(fp):
         for i in range(1, len(trackpoints)):
             dist += haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1])
         stats['distance_m'] = dist
+    stats['trackpoints'] = trackpoints
     return stats
