@@ -96,16 +96,19 @@
       });
     }
 
-    window.initMap = function() {
-      createMap();
-      initChart();
-    };
-  </script>
-  <% if (googleMapsApiKey) { %>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
-  <% } else { %>
-  <p style="color:red">Google Maps API key not set</p>
-  <% } %>
+  window.initMap = function() {
+    createMap();
+    initChart();
+  };
+</script>
+<% if (googleMapsApiKey) { %>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
+<% } else { %>
+<p style="color:red">Google Maps API key not set</p>
+<script>
+  document.addEventListener('DOMContentLoaded', initChart);
+</script>
+<% } %>
   <% } else { %>
   <p>No trackpoints found in GPX.</p>
   <% } %>
