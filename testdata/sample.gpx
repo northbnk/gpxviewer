@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Example GPX</name>
+    <trkseg>
+      <trkpt lat="35.0" lon="135.0"></trkpt>
+      <trkpt lat="35.1" lon="135.1"></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
