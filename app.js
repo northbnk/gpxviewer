@@ -1,0 +1,31 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const { parseGpx } = require('./gpxutils.js');
+
+const app = express();
+const upload = multer();
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'templates'));
+
+app.get('/', (req, res) => {
+  res.render('index');
+});
+
+app.post('/upload', upload.single('gpxfile'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded');
+  }
+  try {
+    const stats = parseGpx(req.file.buffer.toString());
+    res.render('result', { stats });
+  } catch (err) {
+    res.status(400).send('Failed to parse GPX');
+  }
+});
+
+const port = process.env.PORT || 5000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
+});

@@ -1,15 +1,15 @@
 # GPX Viewer
 
-Simple Flask application to upload a GPX file and show basic statistics.
+Simple Node.js and Express application to upload a GPX file and show basic statistics.
 
 ## Usage
 
-1. Install Flask if not already installed:
+1. Install dependencies (Express, Multer, EJS):
    ```bash
-   pip install Flask
+   npm install
    ```
 2. Run the server:
    ```bash
-   python3 app.py
+   node app.js
    ```
 3. Open `http://localhost:5000` in your browser and upload a `.gpx` file.
