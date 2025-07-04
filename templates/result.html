@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GPX Result</title>
+</head>
+<body>
+  <h1>GPX Analysis</h1>
+  {% if stats.points %}
+  <p>Total trackpoints: {{ stats.points }}</p>
+  <p>Total distance: {{ '%.1f'|format(stats.distance_m) }} meters</p>
+  <h2>Bounds</h2>
+  <ul>
+    <li>Min Lat: {{ stats.bounds.min_lat }}</li>
+    <li>Max Lat: {{ stats.bounds.max_lat }}</li>
+    <li>Min Lon: {{ stats.bounds.min_lon }}</li>
+    <li>Max Lon: {{ stats.bounds.max_lon }}</li>
+  </ul>
+  {% else %}
+  <p>No trackpoints found in GPX.</p>
+  {% endif %}
+  <a href="/">Upload another file</a>
+</body>
+</html>
