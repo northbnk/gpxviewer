@@ -1,6 +1,7 @@
 # GPX Viewer
 
 Simple Node.js and Express application to upload a GPX file and show basic statistics.
+It draws the track and an elevation profile using Chart.js loaded from a CDN.
 
 ## Usage
 
