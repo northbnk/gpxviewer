@@ -37,6 +37,7 @@ function parseGpx(text) {
     };
     let dist = 0;
     const perKm = [];
+    const profile = [[0, trackpoints[0][2]]];
     for (let i = 1; i < trackpoints.length; i++) {
       const kmIndex = Math.floor(dist / 1000);
       if (!perKm[kmIndex]) {
@@ -49,9 +50,11 @@ function parseGpx(text) {
         if (diff > 0) perKm[kmIndex].gain += diff; else perKm[kmIndex].loss += -diff;
       }
       dist += haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1]);
+      profile.push([dist, trackpoints[i][2]]);
     }
     stats.distance_m = dist;
     stats.per_km_elevation = perKm;
+    stats.profile = profile;
   }
   stats.trackpoints = trackpoints;
   return stats;
