@@ -18,6 +18,8 @@
   </ul>
   <h2>Track</h2>
   <svg id="track" width="400" height="400" style="border:1px solid #ccc"></svg>
+  <h2>Elevation Profile</h2>
+  <canvas id="elevChart" width="600" height="300"></canvas>
   <h2>Elevation per KM</h2>
   <ul>
     <% (stats.per_km_elevation || []).forEach(function(seg) { %>
@@ -44,6 +46,34 @@
       poly.setAttribute('stroke', 'blue');
       poly.setAttribute('fill', 'none');
       document.getElementById('track').appendChild(poly);
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const profile = <%- JSON.stringify(stats.profile || []) %>;
+    if (profile.length > 1) {
+      const ctx = document.getElementById('elevChart').getContext('2d');
+      const labels = profile.map(p => (p[0] / 1000).toFixed(2));
+      const elev = profile.map(p => p[1]);
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Elevation (m)',
+            data: elev,
+            borderColor: 'blue',
+            fill: false,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Distance (km)' } },
+            y: { title: { display: true, text: 'Elevation (m)' } }
+          }
+        }
+      });
     }
   </script>
   <% } else { %>

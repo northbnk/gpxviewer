@@ -15,4 +15,10 @@ data = fs.readFileSync('testdata/reverse.gpx', 'utf8');
 stats = parseGpx(data);
 assert.strictEqual(stats.points, 2);
 assert.strictEqual(stats.trackpoints.length, 2);
+
+data = fs.readFileSync('testdata/mmp8th_long.gpx', 'utf8');
+stats = parseGpx(data);
+assert(stats.points > 5);
+assert.strictEqual(stats.profile.length, stats.trackpoints.length);
+
 console.log('All tests passed');
