@@ -19,7 +19,7 @@ app.post('/upload', upload.single('gpxfile'), async (req, res) => {
   }
   try {
     const stats = parseGpx(req.file.buffer.toString());
-    res.render('result', { stats });
+    res.render('result', { stats, googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY });
   } catch (err) {
     res.status(400).send('Failed to parse GPX');
   }

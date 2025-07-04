@@ -19,7 +19,7 @@
   <h2>Track</h2>
   <div id="map" style="width:600px;height:400px;border:1px solid #ccc"></div>
   <h2>Elevation Profile</h2>
-  <canvas id="elevChart" width="600" height="300"></canvas>
+  <canvas id="elevChart" width="300" height="150"></canvas>
   <h2>Elevation per KM</h2>
   <ul>
     <% (stats.per_km_elevation || []).forEach(function(seg) { %>
@@ -101,35 +101,11 @@
       initChart();
     };
   </script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const profile = <%- JSON.stringify(stats.profile || []) %>;
-    if (profile.length > 1) {
-      const ctx = document.getElementById('elevChart').getContext('2d');
-      const labels = profile.map(p => (p[0] / 1000).toFixed(2));
-      const elev = profile.map(p => p[1]);
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Elevation (m)',
-            data: elev,
-            borderColor: 'blue',
-            fill: false,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display: true, text: 'Distance (km)' } },
-            y: { title: { display: true, text: 'Elevation (m)' } }
-          }
-        }
-      });
-    }
-  </script>
+  <% if (googleMapsApiKey) { %>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
+  <% } else { %>
+  <p style="color:red">Google Maps API key not set</p>
+  <% } %>
   <% } else { %>
   <p>No trackpoints found in GPX.</p>
   <% } %>
