@@ -25,7 +25,7 @@ app.post('/upload', upload.single('gpxfile'), async (req, res) => {
   }
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8180;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
 });
