@@ -16,6 +16,30 @@
     <li>Min Lon: <%= stats.bounds.min_lon %></li>
     <li>Max Lon: <%= stats.bounds.max_lon %></li>
   </ul>
+  <h2>Track</h2>
+  <svg id="track" width="400" height="400" style="border:1px solid #ccc"></svg>
+  <script>
+    const points = <%- JSON.stringify(stats.trackpoints) %>;
+    const bounds = <%- JSON.stringify(stats.bounds) %>;
+    if (points.length > 0) {
+      const width = 400;
+      const height = 400;
+      const minLat = bounds.min_lat;
+      const maxLat = bounds.max_lat;
+      const minLon = bounds.min_lon;
+      const maxLon = bounds.max_lon;
+      const coords = points.map(p => {
+        const x = (p[1] - minLon) / (maxLon - minLon) * width;
+        const y = height - (p[0] - minLat) / (maxLat - minLat) * height;
+        return `${x},${y}`;
+      }).join(' ');
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('points', coords);
+      poly.setAttribute('stroke', 'blue');
+      poly.setAttribute('fill', 'none');
+      document.getElementById('track').appendChild(poly);
+    }
+  </script>
   <% } else { %>
   <p>No trackpoints found in GPX.</p>
   <% } %>

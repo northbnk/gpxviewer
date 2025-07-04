@@ -33,6 +33,7 @@ function parseGpx(text) {
     }
     stats.distance_m = dist;
   }
+  stats.trackpoints = trackpoints;
   return stats;
 }
 
