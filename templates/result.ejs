@@ -18,8 +18,14 @@
   </ul>
   <h2>Track</h2>
   <svg id="track" width="400" height="400" style="border:1px solid #ccc"></svg>
+  <h2>Elevation per KM</h2>
+  <ul>
+    <% (stats.per_km_elevation || []).forEach(function(seg) { %>
+      <li>KM <%= seg.km %>: +<%= seg.gain.toFixed(1) %>m / -<%= seg.loss.toFixed(1) %>m</li>
+    <% }); %>
+  </ul>
   <script>
-    const points = <%- JSON.stringify(stats.trackpoints) %>;
+    const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const bounds = <%- JSON.stringify(stats.bounds) %>;
     if (points.length > 0) {
       const width = 400;
