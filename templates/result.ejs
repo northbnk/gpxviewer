@@ -17,7 +17,9 @@
     <li>Max Lon: <%= stats.bounds.max_lon %></li>
   </ul>
   <h2>Track</h2>
-  <svg id="track" width="400" height="400" style="border:1px solid #ccc"></svg>
+  <div id="map" style="width:600px;height:400px;border:1px solid #ccc"></div>
+  <h2>Elevation Profile</h2>
+  <canvas id="elevChart" width="600" height="300"></canvas>
   <h2>Elevation per KM</h2>
   <ul>
     <% (stats.per_km_elevation || []).forEach(function(seg) { %>
@@ -26,26 +28,80 @@
   </ul>
   <script>
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
-    const bounds = <%- JSON.stringify(stats.bounds) %>;
-    if (points.length > 0) {
-      const width = 400;
-      const height = 400;
-      const minLat = bounds.min_lat;
-      const maxLat = bounds.max_lat;
-      const minLon = bounds.min_lon;
-      const maxLon = bounds.max_lon;
-      const coords = points.map(p => {
-        const x = (p[1] - minLon) / (maxLon - minLon) * width;
-        const y = height - (p[0] - minLat) / (maxLat - minLat) * height;
-        return `${x},${y}`;
-      }).join(' ');
-      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-      poly.setAttribute('points', coords);
-      poly.setAttribute('stroke', 'blue');
-      poly.setAttribute('fill', 'none');
-      document.getElementById('track').appendChild(poly);
-    }
+    const profile = <%- JSON.stringify(stats.profile || []) %>;
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let chart, map, marker;
+
+    function updateHighlight(idx) {
+      if (!points[idx]) return;
+      if (marker) {
+        marker.setPosition({ lat: points[idx][0], lng: points[idx][1] });
+      }
+      if (chart) {
+        chart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        chart.tooltip.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        chart.update();
+      }
+    }
+
+    function nearestIndex(lat, lng) {
+      let best = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < points.length; i++) {
+        const dLat = points[i][0] - lat;
+        const dLng = points[i][1] - lng;
+        const d = dLat * dLat + dLng * dLng;
+        if (d < bestDist) { bestDist = d; best = i; }
+      }
+      return best;
+    }
+
+    function createMap() {
+      if (!points.length) return;
+      const path = points.map(p => ({ lat: p[0], lng: p[1] }));
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 14,
+        center: path[0]
+      });
+      const poly = new google.maps.Polyline({ path, map, strokeColor: 'blue' });
+      marker = new google.maps.Marker({ map });
+      map.addListener('mousemove', e => {
+        const idx = nearestIndex(e.latLng.lat(), e.latLng.lng());
+        updateHighlight(idx);
+      });
+      poly.addListener('mousemove', e => {
+        const idx = nearestIndex(e.latLng.lat(), e.latLng.lng());
+        updateHighlight(idx);
+      });
+    }
+
+    function initChart() {
+      if (profile.length < 2) return;
+      const ctx = document.getElementById('elevChart').getContext('2d');
+      const labels = profile.map(p => (p[0] / 1000).toFixed(2));
+      const elev = profile.map(p => p[1]);
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Elevation (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
+        options: {
+          interaction: { mode: 'nearest', intersect: false },
+          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } }
+        }
+      });
+      document.getElementById('elevChart').addEventListener('mousemove', evt => {
+        const els = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
+        if (els.length) updateHighlight(els[0].index);
+      });
+    }
+
+    window.initMap = function() {
+      createMap();
+      initChart();
+    };
+  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
   <% } else { %>
   <p>No trackpoints found in GPX.</p>
   <% } %>
