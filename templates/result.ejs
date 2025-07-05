@@ -17,12 +17,18 @@
 <body>
   <h1>GPX Analysis</h1>
   <% if (stats.points) { %>
-  <p>Total trackpoints: <%= stats.points %></p>
-  <p>Total distance: <%= stats.distance_m.toFixed(1) %> meters</p>
-  <p>Highest elevation: <%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</p>
-  <p>Lowest elevation: <%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</p>
-  <p>Total gain: <%= stats.total_gain_m.toFixed(1) %> m</p>
-  <p>Total loss: <%= stats.total_loss_m.toFixed(1) %> m</p>
+  <div style="display:flex;gap:40px;flex-wrap:wrap;margin-bottom:10px;">
+    <div style="flex:1;min-width:200px;line-height:1.2;">
+      <p style="margin:2px 0;">Total trackpoints: <%= stats.points %></p>
+      <p style="margin:2px 0;">Total distance: <%= stats.distance_m.toFixed(1) %> meters</p>
+      <p style="margin:2px 0;">Highest elevation: <%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</p>
+    </div>
+    <div style="flex:1;min-width:200px;line-height:1.2;">
+      <p style="margin:2px 0;">Lowest elevation: <%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</p>
+      <p style="margin:2px 0;">Total gain: <%= stats.total_gain_m.toFixed(1) %> m</p>
+      <p style="margin:2px 0;">Total loss: <%= stats.total_loss_m.toFixed(1) %> m</p>
+    </div>
+  </div>
   <div id="layout" style="display:flex;align-items:flex-start;gap:10px;">
     <div id="left-panel">
       <h2>Track</h2>
@@ -51,7 +57,7 @@
         <div>
           <h2>Waypoints</h2>
           <button id="clearWaypointsBtn">Clear</button>
-          <div id="segmentStatsTable" style="width:300px;"></div>
+          <div id="waypointStats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
       </div>
       </div>
@@ -218,7 +224,7 @@
       });
     }
 
-    let perKmTable, segTable, segStatsTable;
+    let perKmTable, segTable;
 
     function initTable() {
       if (perKmData && perKmData.length) {
@@ -250,19 +256,6 @@
           ]
         });
       }
-      segStatsTable = new Tabulator('#segmentStatsTable', {
-        data: [],
-        layout: 'fitColumns',
-        columns: [
-          { title: 'Seg', field: 'idx' },
-          { title: 'Dist (m)', field: 'dist_m', formatter: c => c.getValue().toFixed(1) },
-          { title: 'Gain (m)', field: 'gain_m', formatter: c => c.getValue().toFixed(1) },
-          { title: 'Loss (m)', field: 'loss_m', formatter: c => c.getValue().toFixed(1) },
-          { title: 'Avg Up (%)', field: 'avg_up', formatter: c => c.getValue().toFixed(2) },
-          { title: 'Avg Down (%)', field: 'avg_down', formatter: c => c.getValue().toFixed(2) },
-          { title: 'Pred Time', field: 'pred_time', formatter: c => c.getValue() || '-' }
-        ]
-      });
     }
 
     const ranges = [
@@ -318,7 +311,22 @@
         const stats = computeStats(st, en);
         if (stats) segs.push(Object.assign({ idx: i + 1 }, stats));
       }
-      segStatsTable.setData(segs);
+      const container = document.getElementById('waypointStats');
+      container.innerHTML = '';
+      segs.forEach((seg, i) => {
+        const startLabel = i === 0 ? 'Start' : `WP${i}`;
+        const endLabel = i === segs.length - 1 ? 'Finish' : `WP${i+1}`;
+        const col = document.createElement('div');
+        col.style.minWidth = '150px';
+        col.innerHTML =
+          `<div>Name: ${startLabel}-${endLabel}</div>` +
+          `<div>Distance: ${seg.dist_m.toFixed(1)} m</div>` +
+          `<div>Elevation Gain: ${seg.gain_m.toFixed(1)} m</div>` +
+          `<div>Elevation Loss: ${seg.loss_m.toFixed(1)} m</div>` +
+          `<div>Average Up: ${seg.avg_up.toFixed(2)} %</div>` +
+          `<div>Average Down: ${seg.avg_down.toFixed(2)} %</div>`;
+        container.appendChild(col);
+      });
     }
 
     function addWaypoint(idx) {
