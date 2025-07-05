@@ -18,10 +18,9 @@ It draws the track and an elevation profile using Chart.js loaded from a CDN.
    ```bash
    node app.js
    ```
-4. Open `http://localhost:8180` in your browser and upload a `.gpx` file. You can
-   set uphill and downhill slope thresholds on the upload form. The results page
-   shows how much time was spent on sections steeper than those thresholds and
-   provides a button to download the JSON summary.
+4. Open `http://localhost:8180` in your browser. Drop a `.gpx` file onto the page
+   or use the file picker at the top to upload it. The page then displays various
+   statistics and provides a button to download the JSON summary.
 
 ### Command line analysis
 
