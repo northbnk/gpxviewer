@@ -11,11 +11,11 @@
       Drop GPX file here
     </div>
     <input type="file" id="fileInput" name="gpxfile" accept=".gpx" style="display:none">
-    <input type="submit" value="Upload">
   </form>
   <script>
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
+    const uploadForm = document.getElementById('uploadForm');
 
     dropZone.addEventListener('click', () => fileInput.click());
 
@@ -33,7 +33,12 @@
       dropZone.style.background = '';
       if (e.dataTransfer.files && e.dataTransfer.files.length) {
         fileInput.files = e.dataTransfer.files;
+        uploadForm.submit();
       }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) uploadForm.submit();
     });
   </script>
 </body>
