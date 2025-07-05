@@ -17,9 +17,15 @@
     <li>Max Lon: <%= stats.bounds.max_lon %></li>
   </ul>
   <h2>Track</h2>
-  <div id="map" style="width:600px;height:400px;border:1px solid #ccc"></div>
+  <div id="map" style="width:700px;height:400px;border:1px solid #ccc"></div>
   <h2>Elevation Profile</h2>
-  <canvas id="elevChart" width="300" height="150"></canvas>
+  <label for="yScale">Y-Axis Max:</label>
+  <select id="yScale">
+    <% for (let v = 1000; v <= 10000; v += 1000) { %>
+      <option value="<%= v %>" <%= v === 5000 ? 'selected' : '' %>><%= v %>m</option>
+    <% } %>
+  </select>
+  <canvas id="elevChart" width="700" height="200"></canvas>
   <h2>Elevation per KM</h2>
   <ul>
     <% (stats.per_km_elevation || []).forEach(function(seg) { %>
@@ -82,13 +88,19 @@
       const ctx = document.getElementById('elevChart').getContext('2d');
       const labels = profile.map(p => (p[0] / 1000).toFixed(2));
       const elev = profile.map(p => p[1]);
+      const yMax = parseInt(document.getElementById('yScale').value, 10);
       chart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
         options: {
           interaction: { mode: 'nearest', intersect: false },
-          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } }
+          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' }, min: 0, max: yMax } }
         }
+      });
+      document.getElementById('yScale').addEventListener('change', e => {
+        const newMax = parseInt(e.target.value, 10);
+        chart.options.scales.y.max = newMax;
+        chart.update();
       });
       document.getElementById('elevChart').addEventListener('mousemove', evt => {
         const els = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
