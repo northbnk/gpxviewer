@@ -31,5 +31,6 @@ assert.strictEqual(stats.profile.length, stats.trackpoints.length);
 assert(stats.highest_elevation_m > 1000);
 assert(stats.lowest_elevation_m < 300);
 assert(Math.abs(stats.total_gain_m - stats.total_loss_m) < 1);
+assert(stats.per_km_elevation[0].duration_s > 0);
 
 console.log('All tests passed');
