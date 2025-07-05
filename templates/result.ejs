@@ -60,11 +60,6 @@
         <% } %>
       </select>
       <canvas id="elevChart" width="900" height="450"></canvas>
-      <div>
-        <h2>Waypoints</h2>
-        <button id="clearWaypointsBtn">Clear</button>
-        <div id="waypointStats"></div>
-      </div>
     </div>
     <div id="right-panel">
       <div style="display:flex;gap:10px;">
@@ -82,8 +77,14 @@
           <button id="uploadRateBtn">Upload JSON</button>
         </div>
       </div>
-      </div>
     </div>
+  </div>
+
+  <div id="waypointsSection" style="width:100%;margin-top:20px;">
+    <h2>Waypoints</h2>
+    <button id="clearWaypointsBtn">Clear</button>
+    <div id="waypointStats"></div>
+  </div>
   <script>
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const profile = <%- JSON.stringify(stats.profile || []) %>;
