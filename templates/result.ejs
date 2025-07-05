@@ -10,13 +10,10 @@
   <% if (stats.points) { %>
   <p>Total trackpoints: <%= stats.points %></p>
   <p>Total distance: <%= stats.distance_m.toFixed(1) %> meters</p>
-  <h2>Bounds</h2>
-  <ul>
-    <li>Min Lat: <%= stats.bounds.min_lat %></li>
-    <li>Max Lat: <%= stats.bounds.max_lat %></li>
-    <li>Min Lon: <%= stats.bounds.min_lon %></li>
-    <li>Max Lon: <%= stats.bounds.max_lon %></li>
-  </ul>
+  <p>Highest elevation: <%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</p>
+  <p>Lowest elevation: <%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</p>
+  <p>Total gain: <%= stats.total_gain_m.toFixed(1) %> m</p>
+  <p>Total loss: <%= stats.total_loss_m.toFixed(1) %> m</p>
   <div id="layout" style="display:flex;align-items:flex-start;gap:10px;">
     <div id="left-panel">
       <h2>Track</h2>
@@ -24,8 +21,9 @@
       <h2>Elevation Profile</h2>
       <label for="yScale">Y-Axis Max:</label>
       <select id="yScale">
-        <% for (let v = 1000; v <= 10000; v += 1000) { %>
-          <option value="<%= v %>" <%= v === 5000 ? 'selected' : '' %>><%= v %>m</option>
+        <% const initY = Math.min(3000, Math.max(500, Math.ceil((stats.highest_elevation_m || 0) / 500) * 500)); %>
+        <% for (let v = 500; v <= 3000; v += 500) { %>
+          <option value="<%= v %>" <%= v === initY ? 'selected' : '' %>><%= v %>m</option>
         <% } %>
       </select>
       <canvas id="elevChart" width="900" height="450"></canvas>
