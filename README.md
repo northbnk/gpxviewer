@@ -6,13 +6,17 @@ It draws the track and an elevation profile using Chart.js loaded from a CDN.
 
 ## Usage
 
-1. Install dependencies (Express, Multer, EJS):
+1. Install dependencies (Express, Multer, EJS, dotenv):
    ```bash
    npm install
    ```
-2. Set a Google Maps API key in the environment so the map can load. The key can be provided via the `GOOGLE_MAPS_API_KEY` variable (or the legacy `GOOGLEMAPS_API_KEY`). If the key is not present the result page shows a red warning and the map will not appear, but the elevation chart will still be drawn:
+2. Set a Google Maps API key in the environment so the map can load. You can
+   place it in a `.env` file or export it as `GOOGLE_MAPS_API_KEY` (the legacy
+   `GOOGLEMAPS_API_KEY` is also supported). If the key is absent the result page
+   shows a red warning and the map will not appear, but the elevation chart will
+   still be drawn:
    ```bash
-   export GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE
+   echo GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE > .env
    ```
 3. Run the server (it listens on port 8180 by default):
    ```bash

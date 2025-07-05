@@ -611,6 +611,14 @@
     if (fileInputTop.files.length) uploadFormTop.submit();
   });
 
+  // Prevent unintended navigation when dropping files outside the zone
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop', e => {
+    if (!dropZoneTop.contains(e.target)) {
+      e.preventDefault();
+    }
+  });
+
 </script>
 <% if (googleMapsApiKey) { %>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
