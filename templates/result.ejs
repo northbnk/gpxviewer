@@ -229,7 +229,36 @@
           interaction: { mode: 'nearest', intersect: false },
           scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' }, min: 0, max: yMax } },
           responsive: false,
-          maintainAspectRatio: false
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: ctx => {
+                  if (!ctx.length) return '';
+                  const idx = ctx[0].dataIndex;
+                  const distKm = (points[idx][4] / 1000).toFixed(2);
+                  return `Distance: ${distKm} km`;
+                },
+                label: ctx => {
+                  const idx = ctx.dataIndex;
+                  const ele = points[idx][2];
+                  const lines = [`Elevation: ${ele != null ? ele.toFixed(1) : 'N/A'} m`];
+                  const prev = lastWaypointIndex(idx);
+                  if (prev < idx) {
+                    const stats = computeStats(prev, idx);
+                    if (stats) {
+                      lines.push(`Gain: ${stats.gain_m.toFixed(1)} m`);
+                      lines.push(`Loss: ${stats.loss_m.toFixed(1)} m`);
+                      const dist = stats.dist_m;
+                      const inc = dist > 0 ? ((points[idx][2] - points[prev][2]) / dist * 100).toFixed(2) : '0.00';
+                      lines.push(`Inclination: ${inc} %`);
+                    }
+                  }
+                  return lines;
+                }
+              }
+            }
+          }
         },
         plugins: [hoverLine, rangeHighlight]
       });
@@ -307,6 +336,15 @@
     ];
     let waypoints = [];
     let wpMarkers = [];
+
+    function lastWaypointIndex(idx) {
+      let prev = 0;
+      for (let i = 0; i < waypoints.length; i++) {
+        if (waypoints[i] >= idx) break;
+        prev = waypoints[i];
+      }
+      return prev;
+    }
 
     function formatTime(sec) {
       if (sec == null) return '-';
