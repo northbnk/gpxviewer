@@ -11,7 +11,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'templates'));
 
 app.get('/', (req, res) => {
-  res.render('index');
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY ||
+                 process.env.GOOGLEMAPS_API_KEY ||
+                 process.env.GOOGLE_MAP_API_KEY;
+  res.render('result', { stats: {}, googleMapsApiKey: apiKey, segmentSummary: {} });
 });
 
 app.post('/upload', upload.single('gpxfile'), async (req, res) => {
