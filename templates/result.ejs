@@ -23,14 +23,14 @@
     }
     .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:100%; max-width:900px; }
     #layout { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; justify-content:center; }
-    #left-panel { flex:0 0 auto; max-width:500px; }
-    #right-panel { flex:0 0 auto; max-width:810px; }
+    #left-panel { flex:0 0 500px; max-width:500px; }
+    #center-panel { flex:1 1 300px; max-width:400px; }
+    #right-panel { flex:1 1 300px; max-width:400px; }
     #layout h2 { margin:10px 0; }
     #map { width:100%; max-width:500px; height:450px; }
     #elevChart { width:100%; max-width:500px; height:auto; }
-    #perKmTable { width:100%; max-width:400px; height:980px; }
-    #segmentTable, #predTable, #splitTimesTable { width:100%; max-width:400px; }
-    .right-inner { display:flex; gap:10px; flex-wrap:wrap; }
+    #perKmTable { width:100%; height:980px; }
+    #segmentTable, #predTable, #splitTimesTable { width:100%; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
     .stat-row { display:flex; justify-content:space-between; margin:2px 0; }
     .stat-label { flex:1; font-weight: bold; }
@@ -80,26 +80,22 @@
       </select>
       <canvas id="elevChart" width="500" height="450"></canvas>
     </div>
+    <div id="center-panel">
+      <h2>Elevation per KM</h2>
+      <div id="perKmTable" style="height:980px;"></div>
+    </div>
     <div id="right-panel">
-      <div class="right-inner">
-        <div>
-          <h2>Elevation per KM</h2>
-          <div id="perKmTable" style="height:980px;"></div>
-        </div>
-        <div>
-          <h2>Rate Groups</h2>
-          <div id="segmentTable"></div>
-          <button id="downloadRateBtn">Download JSON</button>
-          <h2 style="margin-top:20px;">Estimated Rate</h2>
-          <div id="predTable"></div>
-          <input type="file" id="rateFileInput" accept=".json" style="display:none">
-          <div style="margin-top:5px;display:flex;gap:5px;align-items:center;">
-            <button id="uploadRateBtn">Upload JSON</button>
-            <button id="refreshRateBtn">Refresh</button>
-          </div>
-          <div id="splitTimesTable" style="margin-top:10px;"></div>
-        </div>
+      <h2>Rate Groups</h2>
+      <div id="segmentTable"></div>
+      <button id="downloadRateBtn">Download JSON</button>
+      <h2 style="margin-top:20px;">Estimated Rate</h2>
+      <div id="predTable"></div>
+      <input type="file" id="rateFileInput" accept=".json" style="display:none">
+      <div style="margin-top:5px;display:flex;gap:5px;align-items:center;">
+        <button id="uploadRateBtn">Upload JSON</button>
+        <button id="refreshRateBtn">Refresh</button>
       </div>
+      <div id="splitTimesTable" style="margin-top:10px;"></div>
     </div>
   </div>
 
