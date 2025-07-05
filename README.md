@@ -19,3 +19,17 @@ It draws the track and an elevation profile using Chart.js loaded from a CDN.
    node app.js
    ```
 4. Open `http://localhost:8180` in your browser and upload a `.gpx` file.
+
+### Command line analysis
+
+You can analyze a GPX file from the command line to measure the time spent on
+steep climbs or descents. Provide thresholds in percent for the slope over each
+kilometer:
+
+```bash
+node analyze.js path/to/file.gpx 10 10
+```
+
+The example above calculates how many seconds were spent on kilometers where the
+uphill grade was at least 10% and where the downhill grade was at least 10%.
+The result is printed as JSON.

@@ -29,7 +29,13 @@ function parseGpx(text) {
       if (ele > highest) highest = ele;
       if (ele < lowest) lowest = ele;
     }
-    trackpoints.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele]);
+    let time = null;
+    const timeMatch = /<time>([^<]+)<\/time>/i.exec(content);
+    if (timeMatch) {
+      const t = Date.parse(timeMatch[1]);
+      if (!Number.isNaN(t)) time = t;
+    }
+    trackpoints.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele, time]);
   }
   const stats = { points: trackpoints.length };
   if (trackpoints.length > 0) {
@@ -46,10 +52,11 @@ function parseGpx(text) {
     const profile = [[0, trackpoints[0][2]]];
     let totalGain = 0;
     let totalLoss = 0;
+    trackpoints[0][4] = 0; // cumulative distance
     for (let i = 1; i < trackpoints.length; i++) {
       const kmIndex = Math.floor(dist / 1000);
       if (!perKm[kmIndex]) {
-        perKm[kmIndex] = { km: kmIndex + 1, gain: 0, loss: 0 };
+        perKm[kmIndex] = { km: kmIndex + 1, gain: 0, loss: 0, start_time: trackpoints[i-1][3], end_time: null };
       }
       const ele1 = trackpoints[i-1][2];
       const ele2 = trackpoints[i][2];
@@ -63,10 +70,20 @@ function parseGpx(text) {
           totalLoss += -diff;
         }
       }
-      dist += haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1]);
+      const segDist = haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1]);
+      dist += segDist;
+      trackpoints[i][4] = dist;
+      perKm[kmIndex].end_time = trackpoints[i][3];
       profile.push([dist, trackpoints[i][2]]);
     }
     stats.distance_m = dist;
+    perKm.forEach(km => {
+      if (km.start_time != null && km.end_time != null) {
+        km.duration_s = (km.end_time - km.start_time) / 1000;
+      } else {
+        km.duration_s = null;
+      }
+    });
     stats.per_km_elevation = perKm;
     stats.profile = profile;
     stats.total_gain_m = totalGain;
@@ -79,3 +96,19 @@ function parseGpx(text) {
 }
 
 module.exports = { parseGpx };
+
+function analyzeSlopeTime(stats, upThreshold, downThreshold) {
+  if (!stats.per_km_elevation) return { up_threshold: upThreshold, down_threshold: downThreshold, up_time_s: 0, down_time_s: 0 };
+  let up = 0;
+  let down = 0;
+  stats.per_km_elevation.forEach(km => {
+    if (km.duration_s == null) return;
+    const upRate = (km.gain / 1000) * 100;
+    const downRate = (km.loss / 1000) * 100;
+    if (upRate >= upThreshold) up += km.duration_s;
+    if (downRate >= downThreshold) down += km.duration_s;
+  });
+  return { up_threshold: upThreshold, down_threshold: downThreshold, up_time_s: up, down_time_s: down };
+}
+
+module.exports.analyzeSlopeTime = analyzeSlopeTime;
