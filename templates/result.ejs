@@ -588,6 +588,18 @@
   const fileInputTop = document.getElementById('fileInputTop');
   const uploadFormTop = document.getElementById('uploadFormTop');
 
+  function submitGpxFile(file) {
+    const formData = new FormData();
+    formData.append('gpxfile', file);
+    fetch('/upload', { method: 'POST', body: formData })
+      .then(res => res.text())
+      .then(html => {
+        document.open();
+        document.write(html);
+        document.close();
+      });
+  }
+
   dropZoneTop.addEventListener('click', () => fileInputTop.click());
   dropZoneTop.addEventListener('dragover', e => {
     e.preventDefault();
@@ -601,14 +613,11 @@
     dropZoneTop.style.background = '';
     const files = e.dataTransfer.files;
     if (files && files.length) {
-      const dt = new DataTransfer();
-      for (const file of files) dt.items.add(file);
-      fileInputTop.files = dt.files;
-      uploadFormTop.submit();
+      submitGpxFile(files[0]);
     }
   });
   fileInputTop.addEventListener('change', () => {
-    if (fileInputTop.files.length) uploadFormTop.submit();
+    if (fileInputTop.files.length) submitGpxFile(fileInputTop.files[0]);
   });
 
   // Prevent unintended navigation when dropping files outside the zone
