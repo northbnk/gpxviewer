@@ -583,10 +583,26 @@
     computePredictedTimes();
   });
 
-  // Top drop zone upload
+</script>
+<% if (googleMapsApiKey) { %>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
+<% } else { %>
+<p style="color:red">Google Maps API key not set</p>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    initTable();
+  });
+</script>
+<% } %>
+  <% } else { %>
+  <p>Please upload a GPX file using the drop zone above.</p>
+  <% } %>
+
+<script>
+  // Upload form interactions should work even when no GPX data is displayed
   const dropZoneTop = document.getElementById('dropZoneTop');
   const fileInputTop = document.getElementById('fileInputTop');
-  const uploadFormTop = document.getElementById('uploadFormTop');
 
   function submitGpxFile(file) {
     const formData = new FormData();
@@ -627,21 +643,6 @@
       e.preventDefault();
     }
   });
-
 </script>
-<% if (googleMapsApiKey) { %>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
-<% } else { %>
-<p style="color:red">Google Maps API key not set</p>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    initChart();
-    initTable();
-  });
-</script>
-<% } %>
-  <% } else { %>
-  <p>Please upload a GPX file using the drop zone above.</p>
-  <% } %>
 </body>
 </html>
