@@ -109,16 +109,6 @@
         cls = 'flat';
       }
       row.trend = `<span class="${cls} trend-icon"><b>${arrow}</b></span>`;
-      if (row.start_idx != null && row.end_idx != null) {
-        const dist = points[row.end_idx][4] - points[row.start_idx][4];
-        const up = row.gain;
-        const down = row.loss;
-        const avgUp = dist > 0 ? (up / dist) * 100 : 0;
-        const avgDown = dist > 0 ? (down / dist) * 100 : 0;
-        const net = avgUp - avgDown;
-        row.actual_time_s = row.duration_s;
-        row.pred_time_s = predictedTimeSeconds(dist, net);
-      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -348,6 +338,7 @@
           const avgUp = dist > 0 ? (row.gain / dist) * 100 : 0;
           const avgDown = dist > 0 ? (row.loss / dist) * 100 : 0;
           const net = avgUp - avgDown;
+          row.actual_time_s = row.duration_s;
           row.pred_time_s = predictedTimeSeconds(dist, net);
         }
       });
