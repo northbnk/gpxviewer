@@ -127,7 +127,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
   <script>
-    let chart, map, marker;
+    let chart, map, marker, rangePolyline;
     const hoverLine = {
       id: 'hoverLine',
       afterDraw(chart) {
@@ -180,6 +180,24 @@
       if (!chart) return;
       chart._selectedRange = { startIdx, endIdx };
       chart.update();
+      if (map) {
+        const path = [];
+        for (let i = startIdx; i <= endIdx; i++) {
+          path.push({ lat: points[i][0], lng: points[i][1] });
+        }
+        if (!rangePolyline) {
+          rangePolyline = new google.maps.Polyline({
+            path,
+            map,
+            strokeColor: 'red',
+            strokeOpacity: 0.8,
+            strokeWeight: 6
+          });
+        } else {
+          rangePolyline.setPath(path);
+          rangePolyline.setMap(map);
+        }
+      }
     }
 
     function nearestIndex(lat, lng) {
