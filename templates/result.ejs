@@ -65,6 +65,10 @@
           <h2>Rate Groups</h2>
           <div id="segmentTable" style="width:330px;"></div>
           <button id="downloadRateBtn">Download JSON</button>
+          <h2 style="margin-top:20px;">Rate（予想）</h2>
+          <div id="predTable" style="width:330px;"></div>
+          <input type="file" id="rateFileInput" accept=".json" style="display:none">
+          <button id="uploadRateBtn">Upload JSON</button>
         </div>
       </div>
       </div>
@@ -74,6 +78,7 @@
     const profile = <%- JSON.stringify(stats.profile || []) %>;
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
     const segmentData = <%- JSON.stringify(segmentSummary || {}) %>;
+    const predictedData = JSON.parse(JSON.stringify(segmentData.summary || []));
     perKmData.forEach(row => {
       const diff = row.gain - row.loss;
       let arrow, cls;
@@ -92,6 +97,16 @@
         cls = 'flat';
       }
       row.trend = `<span class="${cls} trend-icon">${arrow}</span>`;
+      if (row.start_idx != null && row.end_idx != null) {
+        const dist = points[row.end_idx][4] - points[row.start_idx][4];
+        const up = row.gain;
+        const down = row.loss;
+        const avgUp = dist > 0 ? (up / dist) * 100 : 0;
+        const avgDown = dist > 0 ? (down / dist) * 100 : 0;
+        const net = avgUp - avgDown;
+        row.actual_time_s = row.duration_s;
+        row.pred_time_s = predictedTimeSeconds(dist, net);
+      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -232,7 +247,7 @@
       updateWaypointDataset();
     }
 
-    let perKmTable, segTable;
+    let perKmTable, segTable, predTable;
 
     function initTable() {
       if (perKmData && perKmData.length) {
@@ -249,6 +264,8 @@
             { title: 'KM', field: 'km' },
             { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
             { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) },
+            { title: '所要時間（実際）', field: 'actual_time_s', formatter: cell => formatTime(cell.getValue()) },
+            { title: '所要時間（予想）', field: 'pred_time_s', formatter: cell => formatTime(cell.getValue()) },
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 }
           ]
         });
@@ -264,6 +281,19 @@
           ]
         });
       }
+      if (predictedData) {
+        predTable = new Tabulator('#predTable', {
+          data: predictedData,
+          layout: 'fitColumns',
+          columns: [
+            { title: 'Group', field: 'label', editor: false },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', editor: 'number' },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', editor: 'number' }
+          ],
+          cellEdited: computePredictedTimes
+        });
+      }
+      computePredictedTimes();
     }
 
     const ranges = [
@@ -284,14 +314,32 @@
       return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
     }
 
-    function predictedTime(dist, netRate) {
-      if (!segmentData || !segmentData.summary) return null;
+    function predictedTimeSeconds(dist, netRate) {
+      if (!predictedData || !predictedData.length) return null;
       const slope = Math.max(0, netRate);
       const range = ranges.find(r => slope >= r.min && slope < r.max);
       if (!range) return null;
-      const grp = segmentData.summary.find(g => g.label === range.label);
+      const grp = predictedData.find(g => g.label === range.label);
       if (!grp || grp.avg_speed == null) return null;
-      return formatTime((dist / 1000) / grp.avg_speed * 3600);
+      return (dist / 1000) / grp.avg_speed * 3600;
+    }
+
+    function predictedTime(dist, netRate) {
+      const sec = predictedTimeSeconds(dist, netRate);
+      return formatTime(sec);
+    }
+
+    function computePredictedTimes() {
+      perKmData.forEach(row => {
+        if (row.start_idx != null && row.end_idx != null) {
+          const dist = points[row.end_idx][4] - points[row.start_idx][4];
+          const avgUp = dist > 0 ? (row.gain / dist) * 100 : 0;
+          const avgDown = dist > 0 ? (row.loss / dist) * 100 : 0;
+          const net = avgUp - avgDown;
+          row.pred_time_s = predictedTimeSeconds(dist, net);
+        }
+      });
+      if (perKmTable) perKmTable.replaceData(perKmData);
     }
 
     function computeStats(startIdx, endIdx) {
@@ -388,6 +436,30 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('uploadRateBtn').addEventListener('click', function() {
+    document.getElementById('rateFileInput').click();
+  });
+
+  document.getElementById('rateFileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const data = JSON.parse(reader.result);
+        if (Array.isArray(data)) {
+          predictedData.splice(0, predictedData.length, ...data);
+          if (predTable) predTable.replaceData(predictedData);
+          computePredictedTimes();
+        }
+      } catch(err) {
+        alert('Invalid JSON');
+      }
+    };
+    reader.readAsText(file);
+    this.value = '';
   });
 
 </script>
