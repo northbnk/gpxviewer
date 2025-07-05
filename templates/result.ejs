@@ -15,10 +15,13 @@
     .trend-icon { font-weight:bold; }
     .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:900px; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
-    .segment-col { min-width:150px; line-height:1.2; }
     .stat-row { display:flex; justify-content:space-between; margin:2px 0; }
     .stat-label { flex:1; font-weight: bold; }
     .stat-value { margin-left:10px; text-align:right; min-width:70px; }
+    #waypointStats { overflow-x:auto; }
+    #waypointStats table { width:100%; table-layout:fixed; border-collapse:collapse; }
+    #waypointStats th, #waypointStats td { padding:2px 4px; text-align:center; }
+    #waypointStats td.label-cell, #waypointStats th.label-cell { text-align:left; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -57,11 +60,6 @@
         <% } %>
       </select>
       <canvas id="elevChart" width="900" height="450"></canvas>
-      <div>
-        <h2>Waypoints</h2>
-        <button id="clearWaypointsBtn">Clear</button>
-        <div id="waypointStats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
-      </div>
     </div>
     <div id="right-panel">
       <div style="display:flex;gap:10px;">
@@ -79,8 +77,14 @@
           <button id="uploadRateBtn">Upload JSON</button>
         </div>
       </div>
-      </div>
     </div>
+  </div>
+
+  <div id="waypointsSection" style="width:100%;margin-top:20px;">
+    <h2>Waypoints</h2>
+    <button id="clearWaypointsBtn">Clear</button>
+    <div id="waypointStats"></div>
+  </div>
   <script>
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const profile = <%- JSON.stringify(stats.profile || []) %>;
@@ -375,22 +379,40 @@
         const stats = computeStats(st, en);
         if (stats) segs.push(Object.assign({ idx: i + 1 }, stats));
       }
+
       const container = document.getElementById('waypointStats');
       container.innerHTML = '';
+
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headRow.innerHTML = '<th class="label-cell">Name</th>';
       segs.forEach((seg, i) => {
         const startLabel = i === 0 ? 'Start' : `WP${i}`;
         const endLabel = i === segs.length - 1 ? 'Finish' : `WP${i+1}`;
-        const col = document.createElement('div');
-        col.className = 'segment-col';
-        col.innerHTML =
-          `<div class="stat-row"><span class="stat-label">Name:</span><span class="stat-value">${startLabel}-${endLabel}</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Distance:</span><span class="stat-value">${(seg.dist_m/1000).toFixed(1)} km</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Elevation Gain:</span><span class="stat-value">${seg.gain_m.toFixed(1)} m</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Elevation Loss:</span><span class="stat-value">${seg.loss_m.toFixed(1)} m</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Average Up:</span><span class="stat-value">${seg.avg_up.toFixed(2)} %</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Average Down:</span><span class="stat-value">${seg.avg_down.toFixed(2)} %</span></div>`;
-        container.appendChild(col);
+        headRow.innerHTML += `<th>${startLabel}-${endLabel}</th>`;
       });
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      function addRow(label, formatter) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td class="label-cell">${label}</td>`;
+        segs.forEach(seg => {
+          row.innerHTML += `<td>${formatter(seg)}</td>`;
+        });
+        tbody.appendChild(row);
+      }
+
+      addRow('Distance', seg => `${(seg.dist_m/1000).toFixed(1)} km`);
+      addRow('Elevation Gain', seg => `${seg.gain_m.toFixed(1)} m`);
+      addRow('Elevation Loss', seg => `${seg.loss_m.toFixed(1)} m`);
+      addRow('Average Up', seg => `${seg.avg_up.toFixed(2)} %`);
+      addRow('Average Down', seg => `${seg.avg_down.toFixed(2)} %`);
+
+      table.appendChild(tbody);
+      container.appendChild(table);
     }
 
     function updateWaypointDataset() {
