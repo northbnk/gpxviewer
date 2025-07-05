@@ -104,25 +104,32 @@
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
     const segmentData = <%- JSON.stringify(segmentSummary || {}) %>;
     const predictedData = JSON.parse(JSON.stringify(segmentData.summary || []));
-    perKmData.forEach(row => {
-      const diff = row.gain - row.loss;
-      let icon, cls;
-      if (diff > 5) {
-        icon = 'trending_up';
-        if (diff > 40) cls = 'up3';
-        else if (diff > 20) cls = 'up2';
-        else cls = 'up1';
-      } else if (diff < -5) {
-        icon = 'trending_down';
-        if (diff < -40) cls = 'down3';
-        else if (diff < -20) cls = 'down2';
-        else cls = 'down1';
-      } else {
-        icon = 'trending_flat';
-        cls = 'flat';
-      }
-      row.trend = `<span class="${cls} material-symbols-outlined trend-icon">${icon}</span>`;
-    });
+
+    function addTrendInfo(arr) {
+      arr.forEach(row => {
+        const diff = (row.gain && row.loss) != null ? (row.gain - row.loss) : row.avg_net_rate;
+        let icon, cls;
+        if (diff > 5) {
+          icon = 'trending_up';
+          if (diff > 40) cls = 'up3';
+          else if (diff > 20) cls = 'up2';
+          else cls = 'up1';
+        } else if (diff < -5) {
+          icon = 'trending_down';
+          if (diff < -40) cls = 'down3';
+          else if (diff < -20) cls = 'down2';
+          else cls = 'down1';
+        } else {
+          icon = 'trending_flat';
+          cls = 'flat';
+        }
+        row.trend = `<span class="${cls} material-symbols-outlined trend-icon">${icon}</span>`;
+      });
+    }
+
+    addTrendInfo(perKmData);
+    if (segmentData.summary) addTrendInfo(segmentData.summary);
+    addTrendInfo(predictedData);
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
@@ -220,7 +227,8 @@
         center: path[0],
         zoomControl: true,
         scrollwheel: true,
-        gestureHandling: 'greedy'
+        gestureHandling: 'greedy',
+        mapTypeId: 'terrain'
       });
       const bounds = new google.maps.LatLngBounds();
       path.forEach(p => bounds.extend(p));
@@ -337,6 +345,7 @@
           data: segmentData.summary,
           layout: 'fitColumns',
           columns: [
+            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
             { title: 'Group', field: 'label', width: 100 },
             { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
             { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
@@ -348,6 +357,7 @@
           data: predictedData,
           layout: 'fitColumns',
           columns: [
+            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
             { title: 'Group', field: 'label', editor: false, width: 100 },
             { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
             { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
@@ -412,6 +422,8 @@
         }
       });
       if (perKmTable) perKmTable.replaceData(perKmData);
+      addTrendInfo(predictedData);
+      if (predTable) predTable.replaceData(predictedData);
       updateSplitTimes();
     }
 
