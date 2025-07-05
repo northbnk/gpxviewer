@@ -14,6 +14,8 @@ function parseGpx(text) {
   const trackpoints = [];
   const regex = /<trkpt\b([^>]*)(?:\/>|>([\s\S]*?)<\/trkpt>)/g;
   let match;
+  let highest = -Infinity;
+  let lowest = Infinity;
   while ((match = regex.exec(text)) !== null) {
     const attrs = match[1];
     const content = match[2] || '';
@@ -22,7 +24,11 @@ function parseGpx(text) {
     if (!latMatch || !lonMatch) continue;
     let ele = null;
     const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(content);
-    if (eleMatch) ele = parseFloat(eleMatch[1]);
+    if (eleMatch) {
+      ele = parseFloat(eleMatch[1]);
+      if (ele > highest) highest = ele;
+      if (ele < lowest) lowest = ele;
+    }
     trackpoints.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele]);
   }
   const stats = { points: trackpoints.length };
@@ -38,6 +44,8 @@ function parseGpx(text) {
     let dist = 0;
     const perKm = [];
     const profile = [[0, trackpoints[0][2]]];
+    let totalGain = 0;
+    let totalLoss = 0;
     for (let i = 1; i < trackpoints.length; i++) {
       const kmIndex = Math.floor(dist / 1000);
       if (!perKm[kmIndex]) {
@@ -47,7 +55,13 @@ function parseGpx(text) {
       const ele2 = trackpoints[i][2];
       if (ele1 != null && ele2 != null) {
         const diff = ele2 - ele1;
-        if (diff > 0) perKm[kmIndex].gain += diff; else perKm[kmIndex].loss += -diff;
+        if (diff > 0) {
+          perKm[kmIndex].gain += diff;
+          totalGain += diff;
+        } else if (diff < 0) {
+          perKm[kmIndex].loss += -diff;
+          totalLoss += -diff;
+        }
       }
       dist += haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1]);
       profile.push([dist, trackpoints[i][2]]);
@@ -55,7 +69,11 @@ function parseGpx(text) {
     stats.distance_m = dist;
     stats.per_km_elevation = perKm;
     stats.profile = profile;
+    stats.total_gain_m = totalGain;
+    stats.total_loss_m = totalLoss;
   }
+  stats.highest_elevation_m = highest === -Infinity ? null : highest;
+  stats.lowest_elevation_m = lowest === Infinity ? null : lowest;
   stats.trackpoints = trackpoints;
   return stats;
 }
