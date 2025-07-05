@@ -10,7 +10,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function parseGpx(text) {
+function extractTrackpoints(text) {
   const trackpoints = [];
   const regex = /<trkpt\b([^>]*)(?:\/>|>([\s\S]*?)<\/trkpt>)/g;
   let match;
@@ -37,6 +37,85 @@ function parseGpx(text) {
     }
     trackpoints.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele, time]);
   }
+  return {
+    trackpoints,
+    highest: highest === -Infinity ? null : highest,
+    lowest: lowest === Infinity ? null : lowest
+  };
+}
+
+function calcPerKmStats(trackpoints) {
+  let dist = 0;
+  const perKm = [];
+  const profile = [[0, trackpoints[0][2]]];
+  let totalGain = 0;
+  let totalLoss = 0;
+  trackpoints[0][4] = 0; // cumulative distance
+  for (let i = 1; i < trackpoints.length; i++) {
+    const kmIndex = Math.floor(dist / 1000);
+    if (!perKm[kmIndex]) {
+      perKm[kmIndex] = {
+        km: kmIndex + 1,
+        gain: 0,
+        loss: 0,
+        start_time: trackpoints[i - 1][3],
+        end_time: null,
+        start_idx: i - 1,
+        end_idx: null
+      };
+    }
+    const ele1 = trackpoints[i - 1][2];
+    const ele2 = trackpoints[i][2];
+    if (ele1 != null && ele2 != null) {
+      const diff = ele2 - ele1;
+      if (diff > 0) {
+        perKm[kmIndex].gain += diff;
+        totalGain += diff;
+      } else if (diff < 0) {
+        perKm[kmIndex].loss += -diff;
+        totalLoss += -diff;
+      }
+    }
+    const segDist = haversine(trackpoints[i - 1][0], trackpoints[i - 1][1], trackpoints[i][0], trackpoints[i][1]);
+    dist += segDist;
+    trackpoints[i][4] = dist;
+    perKm[kmIndex].end_time = trackpoints[i][3];
+    perKm[kmIndex].end_idx = i;
+    profile.push([dist, trackpoints[i][2]]);
+  }
+  perKm.forEach(km => {
+    let st = km.start_time;
+    let en = km.end_time;
+    if (km.start_idx != null && km.end_idx != null) {
+      if (st == null) {
+        for (let i = km.start_idx; i <= km.end_idx; i++) {
+          if (trackpoints[i][3] != null) { st = trackpoints[i][3]; break; }
+        }
+      }
+      if (en == null) {
+        for (let i = km.end_idx; i >= km.start_idx; i--) {
+          if (trackpoints[i][3] != null) { en = trackpoints[i][3]; break; }
+        }
+      }
+    }
+    if (st != null && en != null) {
+      km.duration_s = (en - st) / 1000;
+    } else {
+      km.duration_s = null;
+    }
+  });
+
+  return {
+    perKm,
+    profile,
+    distance: dist,
+    totalGain,
+    totalLoss
+  };
+}
+
+function parseGpx(text) {
+  const { trackpoints, highest, lowest } = extractTrackpoints(text);
   const stats = { points: trackpoints.length };
   if (trackpoints.length > 0) {
     const lats = trackpoints.map(p => p[0]);
@@ -47,73 +126,15 @@ function parseGpx(text) {
       min_lon: Math.min(...lons),
       max_lon: Math.max(...lons)
     };
-    let dist = 0;
-    const perKm = [];
-    const profile = [[0, trackpoints[0][2]]];
-    let totalGain = 0;
-    let totalLoss = 0;
-    trackpoints[0][4] = 0; // cumulative distance
-    for (let i = 1; i < trackpoints.length; i++) {
-      const kmIndex = Math.floor(dist / 1000);
-      if (!perKm[kmIndex]) {
-        perKm[kmIndex] = {
-          km: kmIndex + 1,
-          gain: 0,
-          loss: 0,
-          start_time: trackpoints[i-1][3],
-          end_time: null,
-          start_idx: i - 1,
-          end_idx: null
-        };
-      }
-      const ele1 = trackpoints[i-1][2];
-      const ele2 = trackpoints[i][2];
-      if (ele1 != null && ele2 != null) {
-        const diff = ele2 - ele1;
-        if (diff > 0) {
-          perKm[kmIndex].gain += diff;
-          totalGain += diff;
-        } else if (diff < 0) {
-          perKm[kmIndex].loss += -diff;
-          totalLoss += -diff;
-        }
-      }
-      const segDist = haversine(trackpoints[i-1][0], trackpoints[i-1][1], trackpoints[i][0], trackpoints[i][1]);
-      dist += segDist;
-      trackpoints[i][4] = dist;
-      perKm[kmIndex].end_time = trackpoints[i][3];
-      perKm[kmIndex].end_idx = i;
-      profile.push([dist, trackpoints[i][2]]);
-    }
-    stats.distance_m = dist;
-    perKm.forEach(km => {
-      let st = km.start_time;
-      let en = km.end_time;
-      if (km.start_idx != null && km.end_idx != null) {
-        if (st == null) {
-          for (let i = km.start_idx; i <= km.end_idx; i++) {
-            if (trackpoints[i][3] != null) { st = trackpoints[i][3]; break; }
-          }
-        }
-        if (en == null) {
-          for (let i = km.end_idx; i >= km.start_idx; i--) {
-            if (trackpoints[i][3] != null) { en = trackpoints[i][3]; break; }
-          }
-        }
-      }
-      if (st != null && en != null) {
-        km.duration_s = (en - st) / 1000;
-      } else {
-        km.duration_s = null;
-      }
-    });
+    const { perKm, profile, distance, totalGain, totalLoss } = calcPerKmStats(trackpoints);
+    stats.distance_m = distance;
     stats.per_km_elevation = perKm;
     stats.profile = profile;
     stats.total_gain_m = totalGain;
     stats.total_loss_m = totalLoss;
   }
-  stats.highest_elevation_m = highest === -Infinity ? null : highest;
-  stats.lowest_elevation_m = lowest === Infinity ? null : lowest;
+  stats.highest_elevation_m = highest;
+  stats.lowest_elevation_m = lowest;
   stats.trackpoints = trackpoints;
   return stats;
 }
