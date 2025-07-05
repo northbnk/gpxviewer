@@ -95,8 +95,6 @@ function parseGpx(text) {
   return stats;
 }
 
-module.exports = { parseGpx };
-
 function analyzeSlopeTime(stats, upThreshold, downThreshold) {
   if (!stats.per_km_elevation) return { up_threshold: upThreshold, down_threshold: downThreshold, up_time_s: 0, down_time_s: 0 };
   let up = 0;
@@ -111,4 +109,65 @@ function analyzeSlopeTime(stats, upThreshold, downThreshold) {
   return { up_threshold: upThreshold, down_threshold: downThreshold, up_time_s: up, down_time_s: down };
 }
 
-module.exports.analyzeSlopeTime = analyzeSlopeTime;
+
+function analyzeSegments(stats) {
+  const perKm = stats.per_km_elevation || [];
+  const segments = [];
+  for (let i = 0; i < perKm.length; i++) {
+    const segDist = i === perKm.length - 1
+      ? Math.max(0, stats.distance_m - i * 1000)
+      : 1000;
+    const gain = perKm[i].gain;
+    const loss = perKm[i].loss;
+    const upRate = segDist > 0 ? (gain / segDist) * 100 : 0;
+    const downRate = segDist > 0 ? (loss / segDist) * 100 : 0;
+    const netRate = upRate - downRate;
+    const duration = perKm[i].duration_s;
+    const speed = duration && segDist > 0
+      ? (segDist / 1000) / (duration / 3600)
+      : null;
+    segments.push({
+      km: i + 1,
+      dist_m: segDist,
+      gain_m: gain,
+      loss_m: loss,
+      up_rate: upRate,
+      down_rate: downRate,
+      net_rate: netRate,
+      speed_kmh: speed
+    });
+  }
+
+  const ranges = [
+    { label: '[0%, 5%)', min: 0, max: 5, segs: [] },
+    { label: '[5%, 10%)', min: 5, max: 10, segs: [] },
+    { label: '[10%, 15%)', min: 10, max: 15, segs: [] },
+    { label: '[15%, 20%)', min: 15, max: 20, segs: [] },
+    { label: '[20%以上]', min: 20, max: Infinity, segs: [] }
+  ];
+
+  segments.forEach(seg => {
+    const rate = seg.net_rate < 0 ? 0 : seg.net_rate;
+    const grp = ranges.find(r => rate >= r.min && rate < r.max);
+    if (grp) grp.segs.push(seg);
+  });
+
+  const summary = ranges.map(r => {
+    const cnt = r.segs.length;
+    if (!cnt) return { label: r.label, avg_net_rate: null, avg_speed: null };
+    const avgRate = r.segs.reduce((s, x) => s + x.net_rate, 0) / cnt;
+    const spdSegs = r.segs.filter(x => x.speed_kmh != null);
+    const avgSpeed = spdSegs.length
+      ? spdSegs.reduce((s, x) => s + x.speed_kmh, 0) / spdSegs.length
+      : null;
+    return { label: r.label, avg_net_rate: avgRate, avg_speed: avgSpeed };
+  });
+
+  return { segments, summary };
+}
+
+module.exports = {
+  parseGpx,
+  analyzeSlopeTime,
+  analyzeSegments
+};
