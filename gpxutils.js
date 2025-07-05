@@ -134,6 +134,7 @@ function analyzeSegments(stats) {
       up_rate: upRate,
       down_rate: downRate,
       net_rate: netRate,
+      duration_s: duration,
       speed_kmh: speed
     });
   }
@@ -147,19 +148,20 @@ function analyzeSegments(stats) {
   ];
 
   segments.forEach(seg => {
-    const clampedRate = seg.net_rate < 0 ? 0 : seg.net_rate;
-    seg._clamped_rate = clampedRate;
-    const grp = ranges.find(r => clampedRate >= r.min && clampedRate < r.max);
+    if (seg.net_rate < 0) return; // ignore downhill segments
+    const grp = ranges.find(r => seg.net_rate >= r.min && seg.net_rate < r.max);
     if (grp) grp.segs.push(seg);
   });
 
   const summary = ranges.map(r => {
     const cnt = r.segs.length;
     if (!cnt) return { label: r.label, avg_net_rate: null, avg_speed: null };
-    const avgRate = r.segs.reduce((s, x) => s + x._clamped_rate, 0) / cnt;
-    const spdSegs = r.segs.filter(x => x.speed_kmh != null);
-    const avgSpeed = spdSegs.length
-      ? spdSegs.reduce((s, x) => s + x.speed_kmh, 0) / spdSegs.length
+    const avgRate = r.segs.reduce((s, x) => s + x.net_rate, 0) / cnt;
+    const spdSegs = r.segs.filter(x => x.speed_kmh != null && x.duration_s != null);
+    const totalDist = spdSegs.reduce((s, x) => s + x.dist_m, 0);
+    const totalTime = spdSegs.reduce((s, x) => s + x.duration_s, 0);
+    const avgSpeed = spdSegs.length && totalTime > 0
+      ? (totalDist / 1000) / (totalTime / 3600)
       : null;
     return { label: r.label, avg_net_rate: avgRate, avg_speed: avgSpeed };
   });
