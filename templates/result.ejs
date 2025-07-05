@@ -20,7 +20,8 @@
     .stat-value { margin-left:10px; text-align:right; min-width:70px; }
     #waypointStats { overflow-x:auto; }
     #waypointStats table { width:100%; table-layout:fixed; border-collapse:collapse; }
-    #waypointStats th, #waypointStats td { padding:2px 4px; text-align:center; }
+    #waypointStats th { padding:2px 4px; text-align:center; }
+    #waypointStats td { padding:2px 4px; text-align:right; }
     #waypointStats td.label-cell, #waypointStats th.label-cell { text-align:left; font-weight:bold; }
   </style>
 </head>
@@ -73,6 +74,7 @@
           <button id="downloadRateBtn">Download JSON</button>
           <h2 style="margin-top:20px;">Estimated Rate</h2>
           <div id="predTable" style="width:460px;"></div>
+          <div id="splitTimes" style="margin-top:10px;"></div>
           <input type="file" id="rateFileInput" accept=".json" style="display:none">
           <button id="uploadRateBtn">Upload JSON</button>
         </div>
@@ -292,11 +294,11 @@
             }
           },
           columns: [
-            { title: 'KM', field: 'km', width: 50 },
-            { title: 'Gain (m)', field: 'gain', width: 70, formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Loss (m)', field: 'loss', width: 70, formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Actual Time', field: 'actual_time_s', width: 132, formatter: cell => formatTime(cell.getValue()) },
-            { title: 'Estimated Time', field: 'pred_time_s', width: 158, formatter: cell => formatTime(cell.getValue()) },
+            { title: 'KM', field: 'km', width: 50, hozAlign: 'right' },
+            { title: 'Gain (m)', field: 'gain', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
+            { title: 'Loss (m)', field: 'loss', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
+            { title: 'Actual Time', field: 'actual_time_s', width: 132, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
+            { title: 'Estimated Time', field: 'pred_time_s', width: 158, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 }
           ]
         });
@@ -307,8 +309,8 @@
           layout: 'fitColumns',
           columns: [
             { title: 'Group', field: 'label', width: 100 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
           ]
         });
       }
@@ -318,8 +320,8 @@
           layout: 'fitColumns',
           columns: [
             { title: 'Group', field: 'label', editor: false, width: 100 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, editor: 'number', editorParams: { step: 0.01 } },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, editor: 'number', editorParams: { step: 0.01 } }
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
           ],
           cellEdited: computePredictedTimes
         });
@@ -381,6 +383,24 @@
         }
       });
       if (perKmTable) perKmTable.replaceData(perKmData);
+      updateSplitTimes();
+    }
+
+    function updateSplitTimes() {
+      const container = document.getElementById('splitTimes');
+      if (!container) return;
+      container.innerHTML = '';
+      let cum = 0;
+      const list = document.createElement('ul');
+      perKmData.forEach((row, idx) => {
+        if (row.pred_time_s != null) cum += row.pred_time_s;
+        if ((idx + 1) % 5 === 0) {
+          const li = document.createElement('li');
+          li.textContent = `${idx + 1} km: ${formatTime(cum)}`;
+          list.appendChild(li);
+        }
+      });
+      if (list.childNodes.length) container.appendChild(list);
     }
 
     function computeStats(startIdx, endIdx) {
