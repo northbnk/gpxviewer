@@ -20,12 +20,27 @@ try {
     const loss = perKm[i].loss;
     const upRate = segDist > 0 ? (gain / segDist) * 100 : 0;
     const downRate = segDist > 0 ? (loss / segDist) * 100 : 0;
-    const rawNet = upRate - downRate;
-    const netRate = rawNet < 0 ? 0 : rawNet;
+    const netRate = upRate - downRate;
     const duration = perKm[i].duration_s;
-    const speed = duration && segDist > 0 ? (segDist / 1000) / (duration / 3600) : null;
-    segments.push({ index: i + 1, netRate, speed });
+    const speed = duration && segDist > 0 ?
+      (segDist / 1000) / (duration / 3600) : null;
+    segments.push({
+      index: i + 1,
+      dist: segDist,
+      gain,
+      loss,
+      upRate,
+      downRate,
+      netRate,
+      speed
+    });
   }
+
+  console.log('KM\tDist(m)\tGain(m)\tLoss(m)\tUpRate(%)\tDownRate(%)\tNetRate(%)\tSpeed(km/h)');
+  segments.forEach(seg => {
+    const speedStr = seg.speed == null ? '-' : seg.speed.toFixed(2);
+    console.log(`${seg.index}\t${seg.dist.toFixed(0)}\t${seg.gain.toFixed(2)}\t${seg.loss.toFixed(2)}\t${seg.upRate.toFixed(2)}\t${seg.downRate.toFixed(2)}\t${seg.netRate.toFixed(2)}\t${speedStr}`);
+  });
 
   const groups = [
     { label: '[0%, 5%)', min: 0, max: 5, segs: [] },
