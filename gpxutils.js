@@ -44,7 +44,7 @@ function extractTrackpoints(text) {
   };
 }
 
-function calcPerKmStats(trackpoints) {
+function calcPerKmStats(trackpoints, step = 1000) {
   let dist = 0;
   const perKm = [];
   const profile = [[0, trackpoints[0][2]]];
@@ -52,7 +52,7 @@ function calcPerKmStats(trackpoints) {
   let totalLoss = 0;
   trackpoints[0][4] = 0; // cumulative distance
   for (let i = 1; i < trackpoints.length; i++) {
-    const kmIndex = Math.floor(dist / 1000);
+    const kmIndex = Math.floor(dist / step);
     if (!perKm[kmIndex]) {
       perKm[kmIndex] = {
         km: kmIndex + 1,
@@ -126,7 +126,7 @@ function parseGpx(text) {
       min_lon: Math.min(...lons),
       max_lon: Math.max(...lons)
     };
-    const { perKm, profile, distance, totalGain, totalLoss } = calcPerKmStats(trackpoints);
+    const { perKm, profile, distance, totalGain, totalLoss } = calcPerKmStats(trackpoints, 1000);
     stats.distance_m = distance;
     stats.per_km_elevation = perKm;
     stats.profile = profile;
@@ -154,13 +154,13 @@ function analyzeSlopeTime(stats, upThreshold, downThreshold) {
 }
 
 
-function analyzeSegments(stats) {
-  const perKm = stats.per_km_elevation || [];
+function analyzeSegments(stats, interval = 500) {
+  const { perKm } = calcPerKmStats(stats.trackpoints, interval);
   const segments = [];
   for (let i = 0; i < perKm.length; i++) {
     const segDist = i === perKm.length - 1
-      ? Math.max(0, stats.distance_m - i * 1000)
-      : 1000;
+      ? Math.max(0, stats.distance_m - i * interval)
+      : interval;
     const gain = perKm[i].gain;
     const loss = perKm[i].loss;
     const upRate = segDist > 0 ? (gain / segDist) * 100 : 0;
