@@ -23,12 +23,12 @@
     }
     .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:100%; max-width:900px; }
     #layout { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; justify-content:center; }
-    #left-panel { flex:0 0 500px; max-width:500px; }
+    #left-panel { flex:0 0 600px; max-width:700px; }
     #center-panel { flex:1 1 300px; max-width:400px; }
     #right-panel { flex:1 1 300px; max-width:400px; }
     #layout h2 { margin:10px 0; }
-    #map { width:100%; max-width:500px; height:450px; }
-    #elevChart { width:100%; max-width:500px; height:auto; }
+    #map { width:100%; max-width:700px; height:450px; }
+    #elevChart { width:100%; max-width:700px; height:auto; }
     #perKmTable { width:100%; height:980px; }
     #segmentTable, #predTable, #splitTimesTable { width:100%; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
@@ -78,7 +78,7 @@
           <option value="<%= v %>" <%= v === initY ? 'selected' : '' %>><%= v %>m</option>
         <% } %>
       </select>
-      <canvas id="elevChart" width="500" height="450"></canvas>
+      <canvas id="elevChart" width="700" height="450"></canvas>
     </div>
     <div id="center-panel">
       <h2>Elevation per KM</h2>
