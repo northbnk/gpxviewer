@@ -184,15 +184,16 @@ function analyzeSegments(stats, interval = 500) {
   }
 
   const ranges = [
-    { label: '[0%  -  5%]', min: 0, max: 5, segs: [] },
-    { label: '[5%  - 10%]', min: 5, max: 10, segs: [] },
-    { label: '[10% - 15%]', min: 10, max: 15, segs: [] },
-    { label: '[15% - 20%]', min: 15, max: 20, segs: [] },
-    { label: '[20% -    ]', min: 20, max: Infinity, segs: [] }
+    { label: '[-40% -    ]', min: -Infinity, max: -40, segs: [] },
+    { label: '[-20% - -40%]', min: -40, max: -20, segs: [] },
+    { label: '[ -5% - -20%]', min: -20, max: -5, segs: [] },
+    { label: '[-5%  -   5%]', min: -5, max: 5, segs: [] },
+    { label: '[5%  -  20%]', min: 5, max: 20, segs: [] },
+    { label: '[20% -  40%]', min: 20, max: 40, segs: [] },
+    { label: '[40% -    ]', min: 40, max: Infinity, segs: [] }
   ];
 
   segments.forEach(seg => {
-    if (seg.net_rate < 0) return; // ignore downhill segments
     const grp = ranges.find(r => seg.net_rate >= r.min && seg.net_rate < r.max);
     if (grp) grp.segs.push(seg);
   });
