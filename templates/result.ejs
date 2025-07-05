@@ -41,8 +41,16 @@
       <canvas id="elevChart" width="900" height="450"></canvas>
     </div>
     <div id="right-panel">
-      <h2>Elevation per KM</h2>
-      <div id="perKmTable" style="width:300px;"></div>
+      <div style="display:flex;gap:10px;">
+        <div>
+          <h2>Elevation per KM</h2>
+          <div id="perKmTable" style="width:300px;"></div>
+        </div>
+        <div>
+          <h2>Rate Groups</h2>
+          <div id="segmentTable" style="width:300px;"></div>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -50,6 +58,7 @@
     const profile = <%- JSON.stringify(stats.profile || []) %>;
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
     const slopeData = <%- JSON.stringify(slopeData || {}) %>;
+    const segmentData = <%- JSON.stringify(segmentSummary || {}) %>;
     perKmData.forEach(row => {
       const diff = row.gain - row.loss;
       let arrow, cls;
@@ -173,17 +182,29 @@
     }
 
     function initTable() {
-      if (!perKmData || !perKmData.length) return;
-      new Tabulator('#perKmTable', {
-        data: perKmData,
-        layout: 'fitColumns',
-        columns: [
-          { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 },
-          { title: 'KM', field: 'km' },
-          { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
-          { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) }
-        ]
-      });
+      if (perKmData && perKmData.length) {
+        new Tabulator('#perKmTable', {
+          data: perKmData,
+          layout: 'fitColumns',
+          columns: [
+            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 },
+            { title: 'KM', field: 'km' },
+            { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
+            { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) }
+          ]
+        });
+      }
+      if (segmentData && segmentData.summary) {
+        new Tabulator('#segmentTable', {
+          data: segmentData.summary,
+          layout: 'fitColumns',
+          columns: [
+            { title: 'Group', field: 'label' },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+          ]
+        });
+      }
     }
 
   window.initMap = function() {
