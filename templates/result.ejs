@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>GPX Result</title>
   <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <style>
     .up1 { color: #6bc56b; }
     .up2 { color: #2e8b57; }
@@ -12,7 +13,13 @@
     .down2 { color: #cd5c5c; }
     .down3 { color: #8b0000; }
     .flat { color: #808080; }
-    .trend-icon { font-weight:bold; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .trend-icon.material-symbols-outlined {
+      font-size: 1.4em;
+      vertical-align: middle;
+    }
     .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:900px; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
     .stat-row { display:flex; justify-content:space-between; margin:2px 0; }
@@ -95,22 +102,22 @@
     const predictedData = JSON.parse(JSON.stringify(segmentData.summary || []));
     perKmData.forEach(row => {
       const diff = row.gain - row.loss;
-      let arrow, cls;
+      let icon, cls;
       if (diff > 5) {
-        arrow = '↑';
+        icon = 'trending_up';
         if (diff > 40) cls = 'up3';
         else if (diff > 20) cls = 'up2';
         else cls = 'up1';
       } else if (diff < -5) {
-        arrow = '↓';
+        icon = 'trending_down';
         if (diff < -40) cls = 'down3';
         else if (diff < -20) cls = 'down2';
         else cls = 'down1';
       } else {
-        arrow = '→';
+        icon = 'trending_flat';
         cls = 'flat';
       }
-      row.trend = `<span class="${cls} trend-icon"><b>${arrow}</b></span>`;
+      row.trend = `<span class="${cls} material-symbols-outlined trend-icon">${icon}</span>`;
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
