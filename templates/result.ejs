@@ -22,7 +22,15 @@
   </style>
 </head>
 <body>
-  <h1>GPX Analysis</h1>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <h1 style="margin:0;">GPX Analysis</h1>
+    <form id="uploadFormTop" action="/upload" method="post" enctype="multipart/form-data" style="margin:0;">
+      <div id="dropZoneTop" style="width:150px;height:40px;border:2px dashed #aaa;display:flex;align-items:center;justify-content:center;font-size:0.9em;cursor:pointer;">
+        Drop GPX here
+      </div>
+      <input type="file" id="fileInputTop" name="gpxfile" accept=".gpx" style="display:none">
+    </form>
+  </div>
   <% if (stats.points) { %>
   <div class="stats-grid">
     <div class="stats-col">
@@ -59,14 +67,14 @@
       <div style="display:flex;gap:10px;">
         <div>
           <h2>Elevation per KM</h2>
-          <div id="perKmTable" style="width:330px;"></div>
+          <div id="perKmTable" style="width:360px;height:820px;"></div>
         </div>
         <div>
           <h2>Rate Groups</h2>
-          <div id="segmentTable" style="width:330px;"></div>
+          <div id="segmentTable" style="width:360px;"></div>
           <button id="downloadRateBtn">Download JSON</button>
-          <h2 style="margin-top:20px;">Rate（予想）</h2>
-          <div id="predTable" style="width:330px;"></div>
+          <h2 style="margin-top:20px;">Predicted Rate</h2>
+          <div id="predTable" style="width:360px;"></div>
           <input type="file" id="rateFileInput" accept=".json" style="display:none">
           <button id="uploadRateBtn">Upload JSON</button>
         </div>
@@ -261,11 +269,11 @@
             }
           },
           columns: [
-            { title: 'KM', field: 'km' },
-            { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) },
-            { title: '所要時間（実際）', field: 'actual_time_s', formatter: cell => formatTime(cell.getValue()) },
-            { title: '所要時間（予想）', field: 'pred_time_s', formatter: cell => formatTime(cell.getValue()) },
+            { title: 'KM', field: 'km', width: 50 },
+            { title: 'Gain (m)', field: 'gain', width: 70, formatter: cell => cell.getValue().toFixed(1) },
+            { title: 'Loss (m)', field: 'loss', width: 70, formatter: cell => cell.getValue().toFixed(1) },
+            { title: 'Actual Time', field: 'actual_time_s', width: 90, formatter: cell => formatTime(cell.getValue()) },
+            { title: 'Estimated Time', field: 'pred_time_s', width: 90, formatter: cell => formatTime(cell.getValue()) },
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 }
           ]
         });
@@ -275,9 +283,9 @@
           data: segmentData.summary,
           layout: 'fitColumns',
           columns: [
-            { title: 'Group', field: 'label' },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+            { title: 'Group', field: 'label', width: 80 },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 120, formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
           ]
         });
       }
@@ -286,9 +294,9 @@
           data: predictedData,
           layout: 'fitColumns',
           columns: [
-            { title: 'Group', field: 'label', editor: false },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', editor: 'number' },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', editor: 'number' }
+            { title: 'Group', field: 'label', editor: false, width: 80 },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, editor: 'number', editorParams: { step: 0.01 } },
+            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 120, editor: 'number', editorParams: { step: 0.01 } }
           ],
           cellEdited: computePredictedTimes
         });
@@ -462,6 +470,31 @@
     this.value = '';
   });
 
+  // Top drop zone upload
+  const dropZoneTop = document.getElementById('dropZoneTop');
+  const fileInputTop = document.getElementById('fileInputTop');
+  const uploadFormTop = document.getElementById('uploadFormTop');
+
+  dropZoneTop.addEventListener('click', () => fileInputTop.click());
+  dropZoneTop.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZoneTop.style.background = '#f0f0f0';
+  });
+  dropZoneTop.addEventListener('dragleave', () => {
+    dropZoneTop.style.background = '';
+  });
+  dropZoneTop.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZoneTop.style.background = '';
+    if (e.dataTransfer.files && e.dataTransfer.files.length) {
+      fileInputTop.files = e.dataTransfer.files;
+      uploadFormTop.submit();
+    }
+  });
+  fileInputTop.addEventListener('change', () => {
+    if (fileInputTop.files.length) uploadFormTop.submit();
+  });
+
 </script>
 <% if (googleMapsApiKey) { %>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
@@ -477,6 +510,5 @@
   <% } else { %>
   <p>No trackpoints found in GPX.</p>
   <% } %>
-  <a href="/">Upload another file</a>
 </body>
 </html>
