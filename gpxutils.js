@@ -87,8 +87,22 @@ function parseGpx(text) {
     }
     stats.distance_m = dist;
     perKm.forEach(km => {
-      if (km.start_time != null && km.end_time != null) {
-        km.duration_s = (km.end_time - km.start_time) / 1000;
+      let st = km.start_time;
+      let en = km.end_time;
+      if (km.start_idx != null && km.end_idx != null) {
+        if (st == null) {
+          for (let i = km.start_idx; i <= km.end_idx; i++) {
+            if (trackpoints[i][3] != null) { st = trackpoints[i][3]; break; }
+          }
+        }
+        if (en == null) {
+          for (let i = km.end_idx; i >= km.start_idx; i--) {
+            if (trackpoints[i][3] != null) { en = trackpoints[i][3]; break; }
+          }
+        }
+      }
+      if (st != null && en != null) {
+        km.duration_s = (en - st) / 1000;
       } else {
         km.duration_s = null;
       }
@@ -149,11 +163,11 @@ function analyzeSegments(stats) {
   }
 
   const ranges = [
-    { label: '[0%, 5%)', min: 0, max: 5, segs: [] },
-    { label: '[5%, 10%)', min: 5, max: 10, segs: [] },
-    { label: '[10%, 15%)', min: 10, max: 15, segs: [] },
-    { label: '[15%, 20%)', min: 15, max: 20, segs: [] },
-    { label: '[20%以上]', min: 20, max: Infinity, segs: [] }
+    { label: '[0%  -  5%]', min: 0, max: 5, segs: [] },
+    { label: '[5%  - 10%]', min: 5, max: 10, segs: [] },
+    { label: '[10% - 15%]', min: 10, max: 15, segs: [] },
+    { label: '[15% - 20%]', min: 15, max: 20, segs: [] },
+    { label: '[20% -    ]', min: 20, max: Infinity, segs: [] }
   ];
 
   segments.forEach(seg => {
