@@ -146,8 +146,8 @@ function analyzeSegments(stats) {
     const downRate = segDist > 0 ? (loss / segDist) * 100 : 0;
     const netRate = upRate - downRate;
     const duration = perKm[i].duration_s;
-    const speed = duration && segDist > 0
-      ? (segDist / 1000) / (duration / 3600)
+    const pace = duration && segDist > 0
+      ? (duration / 60) / (segDist / 1000)
       : null;
     segments.push({
       km: i + 1,
@@ -158,7 +158,7 @@ function analyzeSegments(stats) {
       down_rate: downRate,
       net_rate: netRate,
       duration_s: duration,
-      speed_kmh: speed
+      pace_min_per_km: pace
     });
   }
 
@@ -178,15 +178,15 @@ function analyzeSegments(stats) {
 
   const summary = ranges.map(r => {
     const cnt = r.segs.length;
-    if (!cnt) return { label: r.label, avg_net_rate: null, avg_speed: null };
+    if (!cnt) return { label: r.label, avg_net_rate: null, avg_pace: null };
     const avgRate = r.segs.reduce((s, x) => s + x.net_rate, 0) / cnt;
-    const spdSegs = r.segs.filter(x => x.speed_kmh != null && x.duration_s != null);
-    const totalDist = spdSegs.reduce((s, x) => s + x.dist_m, 0);
-    const totalTime = spdSegs.reduce((s, x) => s + x.duration_s, 0);
-    const avgSpeed = spdSegs.length && totalTime > 0
-      ? (totalDist / 1000) / (totalTime / 3600)
+    const paceSegs = r.segs.filter(x => x.pace_min_per_km != null && x.duration_s != null);
+    const totalDist = paceSegs.reduce((s, x) => s + x.dist_m, 0);
+    const totalTime = paceSegs.reduce((s, x) => s + x.duration_s, 0);
+    const avgPace = paceSegs.length && totalTime > 0
+      ? (totalTime / 60) / (totalDist / 1000)
       : null;
-    return { label: r.label, avg_net_rate: avgRate, avg_speed: avgSpeed };
+    return { label: r.label, avg_net_rate: avgRate, avg_pace: avgPace };
   });
 
   return { segments, summary };

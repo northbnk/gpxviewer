@@ -321,7 +321,7 @@
           columns: [
             { title: 'Group', field: 'label', width: 100 },
             { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
           ]
         });
       }
@@ -332,7 +332,7 @@
           columns: [
             { title: 'Group', field: 'label', editor: false, width: 100 },
             { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
-            { title: 'Avg Speed (km/h)', field: 'avg_speed', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
+            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
           ],
           cellEdited: computePredictedTimes
         });
@@ -373,8 +373,8 @@
       const range = ranges.find(r => slope >= r.min && slope < r.max);
       if (!range) return null;
       const grp = predictedData.find(g => g.label === range.label);
-      if (!grp || grp.avg_speed == null) return null;
-      return (dist / 1000) / grp.avg_speed * 3600;
+      if (!grp || grp.avg_pace == null) return null;
+      return (dist / 1000) * grp.avg_pace * 60;
     }
 
     function predictedTime(dist, netRate) {
