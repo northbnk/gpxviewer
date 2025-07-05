@@ -30,7 +30,7 @@
     #waypointStats th { padding:2px 4px; text-align:right; }
     #waypointStats td { padding:2px 4px; text-align:right; }
     #waypointStats td.label-cell { text-align:left; font-weight:bold; }
-    #waypointStats th.label-cell { text-align:right; font-weight:bold; }
+    #waypointStats th.label-cell { text-align:left; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -436,16 +436,18 @@
       return { dist_m: dist, gain_m: gain, loss_m: loss, avg_up: avgUp, avg_down: avgDown, pred_time: pred };
     }
 
-    function updateSegments() {
-      const idxs = [0, ...waypoints, points.length - 1];
-      idxs.sort((a,b) => a-b);
-      const segs = [];
+    function buildWaypointSegments() {
+      const idxs = [0, ...waypoints, points.length - 1].sort((a, b) => a - b);
+      const segments = [];
       for (let i = 0; i < idxs.length - 1; i++) {
-        const st = idxs[i];
-        const en = idxs[i+1];
-        const stats = computeStats(st, en);
-        if (stats) segs.push(Object.assign({ idx: i + 1 }, stats));
+        const stats = computeStats(idxs[i], idxs[i + 1]);
+        if (stats) segments.push(Object.assign({ idx: i + 1 }, stats));
       }
+      return segments;
+    }
+
+    function updateSegments() {
+      const segs = buildWaypointSegments();
 
       const container = document.getElementById('waypointStats');
       container.innerHTML = '';
@@ -463,20 +465,20 @@
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      function addRow(label, formatter) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td class="label-cell">${label}</td>`;
-        segs.forEach(seg => {
-          row.innerHTML += `<td>${formatter(seg)}</td>`;
-        });
-        tbody.appendChild(row);
-      }
+      const rows = [
+        { label: 'Distance', format: seg => `${(seg.dist_m/1000).toFixed(1)} km` },
+        { label: 'Elevation Gain', format: seg => `${seg.gain_m.toFixed(1)} m` },
+        { label: 'Elevation Loss', format: seg => `${seg.loss_m.toFixed(1)} m` },
+        { label: 'Average Up', format: seg => `${seg.avg_up.toFixed(2)} %` },
+        { label: 'Average Down', format: seg => `${seg.avg_down.toFixed(2)} %` }
+      ];
 
-      addRow('Distance', seg => `${(seg.dist_m/1000).toFixed(1)} km`);
-      addRow('Elevation Gain', seg => `${seg.gain_m.toFixed(1)} m`);
-      addRow('Elevation Loss', seg => `${seg.loss_m.toFixed(1)} m`);
-      addRow('Average Up', seg => `${seg.avg_up.toFixed(2)} %`);
-      addRow('Average Down', seg => `${seg.avg_down.toFixed(2)} %`);
+      rows.forEach(info => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td class="label-cell">${info.label}</td>` +
+                        segs.map(seg => `<td>${info.format(seg)}</td>`).join('');
+        tbody.appendChild(row);
+      });
 
       table.appendChild(tbody);
       container.appendChild(table);
