@@ -56,7 +56,15 @@ function parseGpx(text) {
     for (let i = 1; i < trackpoints.length; i++) {
       const kmIndex = Math.floor(dist / 1000);
       if (!perKm[kmIndex]) {
-        perKm[kmIndex] = { km: kmIndex + 1, gain: 0, loss: 0, start_time: trackpoints[i-1][3], end_time: null };
+        perKm[kmIndex] = {
+          km: kmIndex + 1,
+          gain: 0,
+          loss: 0,
+          start_time: trackpoints[i-1][3],
+          end_time: null,
+          start_idx: i - 1,
+          end_idx: null
+        };
       }
       const ele1 = trackpoints[i-1][2];
       const ele2 = trackpoints[i][2];
@@ -74,6 +82,7 @@ function parseGpx(text) {
       dist += segDist;
       trackpoints[i][4] = dist;
       perKm[kmIndex].end_time = trackpoints[i][3];
+      perKm[kmIndex].end_idx = i;
       profile.push([dist, trackpoints[i][2]]);
     }
     stats.distance_m = dist;
