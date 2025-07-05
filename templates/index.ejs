@@ -6,9 +6,35 @@
 </head>
 <body>
   <h1>Upload GPX File</h1>
-  <form action="/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="gpxfile" accept=".gpx"><br>
+  <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+    <div id="dropZone" style="width:300px;height:150px;border:2px dashed #aaa;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+      Drop GPX file here
+    </div>
+    <input type="file" id="fileInput" name="gpxfile" accept=".gpx" style="display:none">
     <input type="submit" value="Upload">
   </form>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.style.background = '#f0f0f0';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.background = '';
+    });
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.style.background = '';
+      if (e.dataTransfer.files && e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+      }
+    });
+  </script>
 </body>
 </html>
