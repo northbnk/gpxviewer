@@ -12,20 +12,20 @@ try {
   const stats = parseGpx(data);
   const { segments, summary } = analyzeSegments(stats);
 
-  console.log('KM\tDist(m)\tGain(m)\tLoss(m)\tUpRate(%)\tDownRate(%)\tNetRate(%)\tSpeed(km/h)');
+  console.log('KM\tDist(m)\tGain(m)\tLoss(m)\tUpRate(%)\tDownRate(%)\tNetRate(%)\tPace(min/km)');
   segments.forEach((seg, i) => {
-    const speedStr = seg.speed_kmh == null ? '-' : seg.speed_kmh.toFixed(2);
-    console.log(`${i + 1}\t${seg.dist_m.toFixed(0)}\t${seg.gain_m.toFixed(2)}\t${seg.loss_m.toFixed(2)}\t${seg.up_rate.toFixed(2)}\t${seg.down_rate.toFixed(2)}\t${seg.net_rate.toFixed(2)}\t${speedStr}`);
+    const paceStr = seg.pace_min_per_km == null ? '-' : seg.pace_min_per_km.toFixed(2);
+    console.log(`${i + 1}\t${seg.dist_m.toFixed(0)}\t${seg.gain_m.toFixed(2)}\t${seg.loss_m.toFixed(2)}\t${seg.up_rate.toFixed(2)}\t${seg.down_rate.toFixed(2)}\t${seg.net_rate.toFixed(2)}\t${paceStr}`);
   });
 
-  console.log('Group\tAvgNetRate(%)\tAvgSpeed(km/h)');
+  console.log('Group\tAvgNetRate(%)\tAvgPace(min/km)');
   summary.forEach(row => {
     if (row.avg_net_rate == null) {
       console.log(`${row.label}\t-\t-`);
     } else {
       const rateStr = row.avg_net_rate.toFixed(2);
-      const speedStr = row.avg_speed == null ? '-' : row.avg_speed.toFixed(2);
-      console.log(`${row.label}\t${rateStr}\t${speedStr}`);
+      const paceStr = row.avg_pace == null ? '-' : row.avg_pace.toFixed(2);
+      console.log(`${row.label}\t${rateStr}\t${paceStr}`);
     }
   });
 } catch (err) {
