@@ -23,6 +23,9 @@
   <p>Lowest elevation: <%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</p>
   <p>Total gain: <%= stats.total_gain_m.toFixed(1) %> m</p>
   <p>Total loss: <%= stats.total_loss_m.toFixed(1) %> m</p>
+  <p>Uphill threshold: <%= slopeData.up_threshold %>% - time: <%= slopeData.up_time_s.toFixed(1) %> s</p>
+  <p>Downhill threshold: <%= slopeData.down_threshold %>% - time: <%= slopeData.down_time_s.toFixed(1) %> s</p>
+  <button id="downloadBtn">Download analysis JSON</button>
   <div id="layout" style="display:flex;align-items:flex-start;gap:10px;">
     <div id="left-panel">
       <h2>Track</h2>
@@ -46,6 +49,7 @@
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const profile = <%- JSON.stringify(stats.profile || []) %>;
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
+    const slopeData = <%- JSON.stringify(slopeData || {}) %>;
     perKmData.forEach(row => {
       const diff = row.gain - row.loss;
       let arrow, cls;
@@ -187,6 +191,18 @@
     initChart();
     initTable();
   };
+
+  document.getElementById('downloadBtn').addEventListener('click', function() {
+    const blob = new Blob([JSON.stringify(slopeData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'slope_analysis.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 </script>
 <% if (googleMapsApiKey) { %>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
