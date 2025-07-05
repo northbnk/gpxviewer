@@ -43,12 +43,17 @@
           <h2>Elevation per KM</h2>
           <div id="perKmTable" style="width:300px;"></div>
         </div>
-          <div>
-            <h2>Rate Groups</h2>
-            <div id="segmentTable" style="width:300px;"></div>
-            <button id="downloadRateBtn">Download JSON</button>
-          </div>
+        <div>
+          <h2>Rate Groups</h2>
+          <div id="segmentTable" style="width:300px;"></div>
+          <button id="downloadRateBtn">Download JSON</button>
         </div>
+        <div>
+          <h2>Waypoints</h2>
+          <button id="clearWaypointsBtn">Clear</button>
+          <div id="segmentStatsTable" style="width:300px;"></div>
+        </div>
+      </div>
       </div>
     </div>
   <script>
@@ -100,6 +105,22 @@
       }
     };
 
+    const rangeHighlight = {
+      id: 'rangeHighlight',
+      beforeDatasetsDraw(chart) {
+        if (!chart._selectedRange) return;
+        const { startIdx, endIdx } = chart._selectedRange;
+        const meta = chart.getDatasetMeta(0);
+        const ctx = chart.ctx;
+        const startX = meta.data[startIdx].x;
+        const endX = meta.data[endIdx].x;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,0,0,0.1)';
+        ctx.fillRect(startX, chart.scales.y.top, endX - startX, chart.scales.y.bottom - chart.scales.y.top);
+        ctx.restore();
+      }
+    };
+
     function updateHighlight(idx) {
       if (!points[idx]) return;
       if (marker) {
@@ -110,6 +131,12 @@
         chart.tooltip.setActiveElements([{ datasetIndex: 0, index: idx }]);
         chart.update();
       }
+    }
+
+    function highlightRange(startIdx, endIdx) {
+      if (!chart) return;
+      chart._selectedRange = { startIdx, endIdx };
+      chart.update();
     }
 
     function nearestIndex(lat, lng) {
@@ -147,6 +174,14 @@
         const idx = nearestIndex(e.latLng.lat(), e.latLng.lng());
         updateHighlight(idx);
       });
+      map.addListener('click', e => {
+        const idx = nearestIndex(e.latLng.lat(), e.latLng.lng());
+        addWaypoint(idx);
+      });
+      poly.addListener('click', e => {
+        const idx = nearestIndex(e.latLng.lat(), e.latLng.lng());
+        addWaypoint(idx);
+      });
     }
 
     function initChart() {
@@ -156,6 +191,7 @@
       const elev = profile.map(p => p[1]);
       const yMax = parseInt(document.getElementById('yScale').value, 10);
       Chart.register(hoverLine);
+      Chart.register(rangeHighlight);
       chart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
@@ -165,7 +201,7 @@
           responsive: false,
           maintainAspectRatio: false
         },
-        plugins: [hoverLine]
+        plugins: [hoverLine, rangeHighlight]
       });
       document.getElementById('yScale').addEventListener('change', e => {
         const newMax = parseInt(e.target.value, 10);
@@ -176,13 +212,25 @@
         const els = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
         if (els.length) updateHighlight(els[0].index);
       });
+      document.getElementById('elevChart').addEventListener('click', evt => {
+        const els = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
+        if (els.length) addWaypoint(els[0].index);
+      });
     }
+
+    let perKmTable, segTable, segStatsTable;
 
     function initTable() {
       if (perKmData && perKmData.length) {
-        new Tabulator('#perKmTable', {
+        perKmTable = new Tabulator('#perKmTable', {
           data: perKmData,
           layout: 'fitColumns',
+          rowClick: (e, row) => {
+            const d = row.getData();
+            if (d.start_idx != null && d.end_idx != null) {
+              highlightRange(d.start_idx, d.end_idx);
+            }
+          },
           columns: [
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 },
             { title: 'KM', field: 'km' },
@@ -192,7 +240,7 @@
         });
       }
       if (segmentData && segmentData.summary) {
-        new Tabulator('#segmentTable', {
+        segTable = new Tabulator('#segmentTable', {
           data: segmentData.summary,
           layout: 'fitColumns',
           columns: [
@@ -202,12 +250,102 @@
           ]
         });
       }
+      segStatsTable = new Tabulator('#segmentStatsTable', {
+        data: [],
+        layout: 'fitColumns',
+        columns: [
+          { title: 'Seg', field: 'idx' },
+          { title: 'Dist (m)', field: 'dist_m', formatter: c => c.getValue().toFixed(1) },
+          { title: 'Gain (m)', field: 'gain_m', formatter: c => c.getValue().toFixed(1) },
+          { title: 'Loss (m)', field: 'loss_m', formatter: c => c.getValue().toFixed(1) },
+          { title: 'Avg Up (%)', field: 'avg_up', formatter: c => c.getValue().toFixed(2) },
+          { title: 'Avg Down (%)', field: 'avg_down', formatter: c => c.getValue().toFixed(2) },
+          { title: 'Pred Time', field: 'pred_time', formatter: c => c.getValue() || '-' }
+        ]
+      });
     }
+
+    const ranges = [
+      { label: '[0%, 5%)', min: 0, max: 5 },
+      { label: '[5%, 10%)', min: 5, max: 10 },
+      { label: '[10%, 15%)', min: 10, max: 15 },
+      { label: '[15%, 20%)', min: 15, max: 20 },
+      { label: '[20%以上]', min: 20, max: Infinity }
+    ];
+    let waypoints = [];
+    let wpMarkers = [];
+
+    function formatTime(sec) {
+      if (sec == null) return '-';
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.round(sec % 60);
+      return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
+    }
+
+    function predictedTime(dist, netRate) {
+      if (!segmentData || !segmentData.summary) return null;
+      const slope = Math.max(0, netRate);
+      const range = ranges.find(r => slope >= r.min && slope < r.max);
+      if (!range) return null;
+      const grp = segmentData.summary.find(g => g.label === range.label);
+      if (!grp || grp.avg_speed == null) return null;
+      return formatTime((dist / 1000) / grp.avg_speed * 3600);
+    }
+
+    function computeStats(startIdx, endIdx) {
+      if (endIdx <= startIdx) return null;
+      const dist = points[endIdx][4] - points[startIdx][4];
+      let gain = 0, loss = 0;
+      for (let i = startIdx + 1; i <= endIdx; i++) {
+        const diff = points[i][2] - points[i-1][2];
+        if (diff > 0) gain += diff; else if (diff < 0) loss += -diff;
+      }
+      const avgUp = dist > 0 ? (gain / dist) * 100 : 0;
+      const avgDown = dist > 0 ? (loss / dist) * 100 : 0;
+      const netRate = avgUp - avgDown;
+      const pred = predictedTime(dist, netRate);
+      return { dist_m: dist, gain_m: gain, loss_m: loss, avg_up: avgUp, avg_down: avgDown, pred_time: pred };
+    }
+
+    function updateSegments() {
+      const idxs = [0, ...waypoints, points.length - 1];
+      idxs.sort((a,b) => a-b);
+      const segs = [];
+      for (let i = 0; i < idxs.length - 1; i++) {
+        const st = idxs[i];
+        const en = idxs[i+1];
+        const stats = computeStats(st, en);
+        if (stats) segs.push(Object.assign({ idx: i + 1 }, stats));
+      }
+      segStatsTable.setData(segs);
+    }
+
+    function addWaypoint(idx) {
+      if (idx <= 0 || idx >= points.length - 1) return;
+      if (!waypoints.includes(idx)) {
+        waypoints.push(idx);
+        waypoints.sort((a,b) => a-b);
+        if (map) {
+          const marker = new google.maps.Marker({ position: { lat: points[idx][0], lng: points[idx][1] }, map, label: String(waypoints.indexOf(idx)+1) });
+          wpMarkers.push(marker);
+        }
+        updateSegments();
+      }
+    }
+
+    document.getElementById('clearWaypointsBtn').addEventListener('click', () => {
+      waypoints = [];
+      wpMarkers.forEach(m => m.setMap(null));
+      wpMarkers = [];
+      updateSegments();
+    });
 
   window.initMap = function() {
     createMap();
     initChart();
     initTable();
+    updateSegments();
   };
 
   document.getElementById('downloadRateBtn').addEventListener('click', function() {
