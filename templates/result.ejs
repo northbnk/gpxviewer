@@ -391,16 +391,26 @@
       if (!container) return;
       container.innerHTML = '';
       let cum = 0;
-      const list = document.createElement('ul');
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      headRow.innerHTML = '<th>Distance</th><th>Predicted Time</th>';
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
       perKmData.forEach((row, idx) => {
         if (row.pred_time_s != null) cum += row.pred_time_s;
         if ((idx + 1) % 5 === 0) {
-          const li = document.createElement('li');
-          li.textContent = `${idx + 1} km: ${formatTime(cum)}`;
-          list.appendChild(li);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${idx + 1} km</td><td>${formatTime(cum)}</td>`;
+          tbody.appendChild(tr);
         }
       });
-      if (list.childNodes.length) container.appendChild(list);
+      const finishRow = document.createElement('tr');
+      finishRow.innerHTML = `<td>Finish</td><td>${formatTime(cum)}</td>`;
+      tbody.appendChild(finishRow);
+      table.appendChild(tbody);
+      container.appendChild(table);
     }
 
     function computeStats(startIdx, endIdx) {
