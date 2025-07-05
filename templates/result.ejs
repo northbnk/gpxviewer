@@ -599,8 +599,11 @@
   dropZoneTop.addEventListener('drop', e => {
     e.preventDefault();
     dropZoneTop.style.background = '';
-    if (e.dataTransfer.files && e.dataTransfer.files.length) {
-      fileInputTop.files = e.dataTransfer.files;
+    const files = e.dataTransfer.files;
+    if (files && files.length) {
+      const dt = new DataTransfer();
+      for (const file of files) dt.items.add(file);
+      fileInputTop.files = dt.files;
       uploadFormTop.submit();
     }
   });
