@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <title>GPX Result</title>
   <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
+  <style>
+    .up1 { color: #6bc56b; }
+    .up2 { color: #2e8b57; }
+    .up3 { color: #006400; }
+    .down1 { color: #e9967a; }
+    .down2 { color: #cd5c5c; }
+    .down3 { color: #8b0000; }
+    .flat { color: #808080; }
+  </style>
 </head>
 <body>
   <h1>GPX Analysis</h1>
@@ -37,6 +46,25 @@
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const profile = <%- JSON.stringify(stats.profile || []) %>;
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
+    perKmData.forEach(row => {
+      const diff = row.gain - row.loss;
+      let arrow, cls;
+      if (diff > 5) {
+        arrow = '↑';
+        if (diff > 40) cls = 'up3';
+        else if (diff > 20) cls = 'up2';
+        else cls = 'up1';
+      } else if (diff < -5) {
+        arrow = '↓';
+        if (diff < -40) cls = 'down3';
+        else if (diff < -20) cls = 'down2';
+        else cls = 'down1';
+      } else {
+        arrow = '→';
+        cls = 'flat';
+      }
+      row.trend = `<span class="${cls}">${arrow}</span>`;
+    });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
@@ -146,6 +174,7 @@
         data: perKmData,
         layout: 'fitColumns',
         columns: [
+          { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 },
           { title: 'KM', field: 'km' },
           { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
           { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) }
