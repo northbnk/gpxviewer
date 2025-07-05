@@ -12,7 +12,8 @@
     .down2 { color: #cd5c5c; }
     .down3 { color: #8b0000; }
     .flat { color: #808080; }
-    .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; }
+    .trend-icon { font-weight:bold; }
+    .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:900px; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
     .segment-col { min-width:150px; line-height:1.2; }
     .stat-row { display:flex; justify-content:space-between; margin:2px 0; }
@@ -26,7 +27,7 @@
   <div class="stats-grid">
     <div class="stats-col">
       <div class="stat-row"><span class="stat-label">Total trackpoints:</span><span class="stat-value"><%= stats.points %></span></div>
-      <div class="stat-row"><span class="stat-label">Total distance:</span><span class="stat-value"><%= stats.distance_m.toFixed(1) %> meters</span></div>
+      <div class="stat-row"><span class="stat-label">Total distance:</span><span class="stat-value"><%= (stats.distance_m/1000).toFixed(1) %> km</span></div>
       <div class="stat-row"><span class="stat-label">Highest elevation:</span><span class="stat-value"><%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</span></div>
     </div>
     <div class="stats-col">
@@ -48,22 +49,22 @@
         <% } %>
       </select>
       <canvas id="elevChart" width="900" height="450"></canvas>
+      <div>
+        <h2>Waypoints</h2>
+        <button id="clearWaypointsBtn">Clear</button>
+        <div id="waypointStats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
     </div>
     <div id="right-panel">
       <div style="display:flex;gap:10px;">
         <div>
           <h2>Elevation per KM</h2>
-          <div id="perKmTable" style="width:300px;"></div>
+          <div id="perKmTable" style="width:330px;"></div>
         </div>
         <div>
           <h2>Rate Groups</h2>
-          <div id="segmentTable" style="width:300px;"></div>
+          <div id="segmentTable" style="width:330px;"></div>
           <button id="downloadRateBtn">Download JSON</button>
-        </div>
-        <div>
-          <h2>Waypoints</h2>
-          <button id="clearWaypointsBtn">Clear</button>
-          <div id="waypointStats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
       </div>
       </div>
@@ -90,7 +91,7 @@
         arrow = '→';
         cls = 'flat';
       }
-      row.trend = `<span class="${cls}">${arrow}</span>`;
+      row.trend = `<span class="${cls} trend-icon">${arrow}</span>`;
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -199,7 +200,7 @@
     function initChart() {
       if (profile.length < 2) return;
       const ctx = document.getElementById('elevChart').getContext('2d');
-      const labels = profile.map(p => (p[0] / 1000).toFixed(2));
+      const labels = profile.map(p => (p[0] / 1000).toFixed(1));
       const elev = profile.map(p => p[1]);
       const yMax = parseInt(document.getElementById('yScale').value, 10);
       Chart.register(hoverLine);
@@ -228,6 +229,7 @@
         const els = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
         if (els.length) addWaypoint(els[0].index);
       });
+      updateWaypointDataset();
     }
 
     let perKmTable, segTable;
@@ -244,10 +246,10 @@
             }
           },
           columns: [
-            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 },
             { title: 'KM', field: 'km' },
             { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) }
+            { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) },
+            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 40 }
           ]
         });
       }
@@ -326,13 +328,24 @@
         col.className = 'segment-col';
         col.innerHTML =
           `<div class="stat-row"><span class="stat-label">Name:</span><span class="stat-value">${startLabel}-${endLabel}</span></div>` +
-          `<div class="stat-row"><span class="stat-label">Distance:</span><span class="stat-value">${seg.dist_m.toFixed(1)} m</span></div>` +
+          `<div class="stat-row"><span class="stat-label">Distance:</span><span class="stat-value">${(seg.dist_m/1000).toFixed(1)} km</span></div>` +
           `<div class="stat-row"><span class="stat-label">Elevation Gain:</span><span class="stat-value">${seg.gain_m.toFixed(1)} m</span></div>` +
           `<div class="stat-row"><span class="stat-label">Elevation Loss:</span><span class="stat-value">${seg.loss_m.toFixed(1)} m</span></div>` +
           `<div class="stat-row"><span class="stat-label">Average Up:</span><span class="stat-value">${seg.avg_up.toFixed(2)} %</span></div>` +
           `<div class="stat-row"><span class="stat-label">Average Down:</span><span class="stat-value">${seg.avg_down.toFixed(2)} %</span></div>`;
         container.appendChild(col);
       });
+    }
+
+    function updateWaypointDataset() {
+      if (!chart) return;
+      const data = profile.map((p, idx) => waypoints.includes(idx) ? p[1] : null);
+      if (chart.data.datasets.length === 1) {
+        chart.data.datasets.push({ label: 'Waypoints', data, borderColor: 'red', backgroundColor: 'red', showLine: false, pointRadius: 4 });
+      } else {
+        chart.data.datasets[1].data = data;
+      }
+      chart.update();
     }
 
     function addWaypoint(idx) {
@@ -345,6 +358,7 @@
           wpMarkers.push(marker);
         }
         updateSegments();
+        updateWaypointDataset();
       }
     }
 
@@ -353,6 +367,7 @@
       wpMarkers.forEach(m => m.setMap(null));
       wpMarkers = [];
       updateSegments();
+      updateWaypointDataset();
     });
 
   window.initMap = function() {
@@ -360,6 +375,7 @@
     initChart();
     initTable();
     updateSegments();
+    updateWaypointDataset();
   };
 
   document.getElementById('downloadRateBtn').addEventListener('click', function() {
