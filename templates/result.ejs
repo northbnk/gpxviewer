@@ -27,9 +27,10 @@
     .stat-value { margin-left:10px; text-align:right; min-width:70px; }
     #waypointStats { overflow-x:auto; }
     #waypointStats table { width:100%; table-layout:fixed; border-collapse:collapse; }
-    #waypointStats th { padding:2px 4px; text-align:center; }
+    #waypointStats th { padding:2px 4px; text-align:right; }
     #waypointStats td { padding:2px 4px; text-align:right; }
-    #waypointStats td.label-cell, #waypointStats th.label-cell { text-align:left; font-weight:bold; }
+    #waypointStats td.label-cell { text-align:left; font-weight:bold; }
+    #waypointStats th.label-cell { text-align:right; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -81,9 +82,12 @@
           <button id="downloadRateBtn">Download JSON</button>
           <h2 style="margin-top:20px;">Estimated Rate</h2>
           <div id="predTable" style="width:460px;"></div>
-          <div id="splitTimes" style="margin-top:10px;"></div>
           <input type="file" id="rateFileInput" accept=".json" style="display:none">
-          <button id="uploadRateBtn">Upload JSON</button>
+          <div style="margin-top:5px;display:flex;gap:5px;align-items:center;">
+            <button id="uploadRateBtn">Upload JSON</button>
+            <button id="refreshRateBtn">Refresh</button>
+          </div>
+          <div id="splitTimesTable" style="width:460px;margin-top:10px;"></div>
         </div>
       </div>
     </div>
@@ -287,7 +291,7 @@
       updateWaypointDataset();
     }
 
-    let perKmTable, segTable, predTable;
+    let perKmTable, segTable, predTable, splitTimesTable;
 
     function initTable() {
       if (perKmData && perKmData.length) {
@@ -394,30 +398,27 @@
     }
 
     function updateSplitTimes() {
-      const container = document.getElementById('splitTimes');
-      if (!container) return;
-      container.innerHTML = '';
+      const rows = [];
       let cum = 0;
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      headRow.innerHTML = '<th>Distance</th><th>Predicted Time</th>';
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-      const tbody = document.createElement('tbody');
       perKmData.forEach((row, idx) => {
         if (row.pred_time_s != null) cum += row.pred_time_s;
         if ((idx + 1) % 5 === 0) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${idx + 1} km</td><td>${formatTime(cum)}</td>`;
-          tbody.appendChild(tr);
+          rows.push({ distance: `${idx + 1} km`, time: formatTime(cum) });
         }
       });
-      const finishRow = document.createElement('tr');
-      finishRow.innerHTML = `<td>Finish</td><td>${formatTime(cum)}</td>`;
-      tbody.appendChild(finishRow);
-      table.appendChild(tbody);
-      container.appendChild(table);
+      rows.push({ distance: 'Finish', time: formatTime(cum) });
+      if (!splitTimesTable) {
+        splitTimesTable = new Tabulator('#splitTimesTable', {
+          data: rows,
+          layout: 'fitColumns',
+          columns: [
+            { title: 'Distance', field: 'distance', hozAlign: 'right' },
+            { title: 'Predicted Time', field: 'time', hozAlign: 'right' }
+          ]
+        });
+      } else {
+        splitTimesTable.replaceData(rows);
+      }
     }
 
     function computeStats(startIdx, endIdx) {
@@ -556,6 +557,10 @@
     };
     reader.readAsText(file);
     this.value = '';
+  });
+
+  document.getElementById('refreshRateBtn').addEventListener('click', function() {
+    computePredictedTimes();
   });
 
   // Top drop zone upload
