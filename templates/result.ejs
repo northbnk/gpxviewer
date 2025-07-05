@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>GPX Result</title>
+  <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
 </head>
 <body>
   <h1>GPX Analysis</h1>
@@ -16,29 +17,52 @@
     <li>Min Lon: <%= stats.bounds.min_lon %></li>
     <li>Max Lon: <%= stats.bounds.max_lon %></li>
   </ul>
-  <h2>Track</h2>
-  <div id="map" style="width:900px;height:450px;border:1px solid #ccc"></div>
-  <h2>Elevation Profile</h2>
-  <label for="yScale">Y-Axis Max:</label>
-  <select id="yScale">
-    <% for (let v = 1000; v <= 10000; v += 1000) { %>
-      <option value="<%= v %>" <%= v === 5000 ? 'selected' : '' %>><%= v %>m</option>
-    <% } %>
-  </select>
-  <canvas id="elevChart" width="900" height="450"></canvas>
-  <h2>Elevation per KM</h2>
-  <ul>
-    <% (stats.per_km_elevation || []).forEach(function(seg) { %>
-      <li>KM <%= seg.km %>: +<%= seg.gain.toFixed(1) %>m / -<%= seg.loss.toFixed(1) %>m</li>
-    <% }); %>
-  </ul>
+  <div id="layout" style="display:flex;align-items:flex-start;gap:10px;">
+    <div id="left-panel">
+      <h2>Track</h2>
+      <div id="map" style="width:900px;height:450px;border:1px solid #ccc"></div>
+      <h2>Elevation Profile</h2>
+      <label for="yScale">Y-Axis Max:</label>
+      <select id="yScale">
+        <% for (let v = 1000; v <= 10000; v += 1000) { %>
+          <option value="<%= v %>" <%= v === 5000 ? 'selected' : '' %>><%= v %>m</option>
+        <% } %>
+      </select>
+      <canvas id="elevChart" width="900" height="450"></canvas>
+    </div>
+    <div id="right-panel">
+      <h2>Elevation per KM</h2>
+      <div id="perKmTable" style="width:300px;"></div>
+    </div>
+  </div>
   <script>
     const points = <%- JSON.stringify(stats.trackpoints || []) %>;
     const profile = <%- JSON.stringify(stats.profile || []) %>;
+    const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
   <script>
     let chart, map, marker;
+    const hoverLine = {
+      id: 'hoverLine',
+      afterDraw(chart) {
+        if (chart.tooltip && chart.tooltip._active && chart.tooltip._active.length) {
+          const ctx = chart.ctx;
+          const x = chart.tooltip._active[0].element.x;
+          const topY = chart.scales.y.top;
+          const bottomY = chart.scales.y.bottom;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, topY);
+          ctx.lineTo(x, bottomY);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    };
 
     function updateHighlight(idx) {
       if (!points[idx]) return;
@@ -69,8 +93,14 @@
       const path = points.map(p => ({ lat: p[0], lng: p[1] }));
       map = new google.maps.Map(document.getElementById('map'), {
         zoom: 14,
-        center: path[0]
+        center: path[0],
+        zoomControl: true,
+        scrollwheel: true,
+        gestureHandling: 'greedy'
       });
+      const bounds = new google.maps.LatLngBounds();
+      path.forEach(p => bounds.extend(p));
+      map.fitBounds(bounds);
       const poly = new google.maps.Polyline({ path, map, strokeColor: 'blue' });
       marker = new google.maps.Marker({ map });
       map.addListener('mousemove', e => {
@@ -89,6 +119,7 @@
       const labels = profile.map(p => (p[0] / 1000).toFixed(2));
       const elev = profile.map(p => p[1]);
       const yMax = parseInt(document.getElementById('yScale').value, 10);
+      Chart.register(hoverLine);
       chart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
@@ -97,7 +128,8 @@
           scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' }, min: 0, max: yMax } },
           responsive: false,
           maintainAspectRatio: false
-        }
+        },
+        plugins: [hoverLine]
       });
       document.getElementById('yScale').addEventListener('change', e => {
         const newMax = parseInt(e.target.value, 10);
@@ -110,9 +142,23 @@
       });
     }
 
+    function initTable() {
+      if (!perKmData || !perKmData.length) return;
+      new Tabulator('#perKmTable', {
+        data: perKmData,
+        layout: 'fitColumns',
+        columns: [
+          { title: 'KM', field: 'km' },
+          { title: 'Gain (m)', field: 'gain', formatter: cell => cell.getValue().toFixed(1) },
+          { title: 'Loss (m)', field: 'loss', formatter: cell => cell.getValue().toFixed(1) }
+        ]
+      });
+    }
+
   window.initMap = function() {
     createMap();
     initChart();
+    initTable();
   };
 </script>
 <% if (googleMapsApiKey) { %>
@@ -120,7 +166,10 @@
 <% } else { %>
 <p style="color:red">Google Maps API key not set</p>
 <script>
-  document.addEventListener('DOMContentLoaded', initChart);
+  document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    initTable();
+  });
 </script>
 <% } %>
   <% } else { %>
