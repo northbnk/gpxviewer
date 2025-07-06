@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="35.0" lon="135.011"><name>WP1</name></wpt>
+  <wpt lat="35.0" lon="135.033"><name>WP2</name></wpt>
+  <trk>
+    <name>Example GPX with WPT</name>
+    <trkseg>
+      <trkpt lat="35.0" lon="135.000"><ele>100</ele></trkpt>
+      <trkpt lat="35.0" lon="135.011"><ele>110</ele></trkpt>
+      <trkpt lat="35.0" lon="135.022"><ele>105</ele></trkpt>
+      <trkpt lat="35.0" lon="135.033"><ele>115</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

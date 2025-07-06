@@ -137,6 +137,7 @@
     const perKmData = <%- JSON.stringify(stats.per_km_elevation || []) %>;
     const segmentData = <%- JSON.stringify(segmentSummary || {}) %>;
     const predictedData = JSON.parse(JSON.stringify(segmentData.summary || []));
+    const gpxWaypoints = <%- JSON.stringify(stats.waypoints || []) %>;
 
     function addTrendInfo(arr) {
       arr.forEach(row => {
@@ -560,6 +561,13 @@
       chart.update();
     }
 
+    function loadPredefinedWaypoints() {
+      gpxWaypoints.forEach(wp => {
+        const idx = nearestIndex(wp.lat, wp.lon);
+        addWaypoint(idx);
+      });
+    }
+
     function addWaypoint(idx) {
       if (idx <= 0 || idx >= points.length - 1) return;
       if (!waypoints.includes(idx)) {
@@ -586,6 +594,7 @@
     createMap();
     initChart();
     initTable();
+    loadPredefinedWaypoints();
     updateSegments();
     updateWaypointDataset();
   };
@@ -639,6 +648,9 @@
   document.addEventListener('DOMContentLoaded', function() {
     initChart();
     initTable();
+    loadPredefinedWaypoints();
+    updateSegments();
+    updateWaypointDataset();
   });
 </script>
 <% } %>
