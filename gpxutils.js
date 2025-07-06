@@ -44,7 +44,7 @@ function extractTrackpoints(text) {
   };
 }
 
-function calcPerKmStats(trackpoints, step = 1000) {
+function calcPerKmStats(trackpoints, step = 100) {
   let dist = 0;
   const perKm = [];
   const profile = [[0, trackpoints[0][2]]];
@@ -201,13 +201,16 @@ function analyzeSegments(stats, interval = 500) {
   const summary = ranges.map(r => {
     const cnt = r.segs.length;
     if (!cnt) return { label: r.label, avg_net_rate: null, avg_pace: null };
+
     const avgRate = r.segs.reduce((s, x) => s + x.net_rate, 0) / cnt;
-    const paceSegs = r.segs.filter(x => x.pace_min_per_km != null && x.duration_s != null);
-    const totalDist = paceSegs.reduce((s, x) => s + x.dist_m, 0);
-    const totalTime = paceSegs.reduce((s, x) => s + x.duration_s, 0);
-    const avgPace = paceSegs.length && totalTime > 0
+
+    // 合計距離・合計時間で平均ペースを算出
+    const totalDist = r.segs.reduce((s, x) => s + x.dist_m, 0);
+    const totalTime = r.segs.reduce((s, x) => s + x.duration_s, 0);
+    const avgPace = totalTime > 0 && totalDist > 0
       ? (totalTime / 60) / (totalDist / 1000)
       : null;
+
     return { label: r.label, avg_net_rate: avgRate, avg_pace: avgPace };
   });
 
