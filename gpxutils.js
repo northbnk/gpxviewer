@@ -51,6 +51,27 @@ function extractTrackpoints(text) {
   };
 }
 
+function extractWaypoints(text) {
+  const waypoints = [];
+  const regex = /<wpt\b([^>]*)(?:\/>|>([\s\S]*?)<\/wpt>)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const attrs = match[1];
+    const content = match[2] || "";
+    const latMatch = /lat="([^"]+)"/.exec(attrs);
+    const lonMatch = /lon="([^"]+)"/.exec(attrs);
+    if (!latMatch || !lonMatch) continue;
+    const wp = {
+      lat: parseFloat(latMatch[1]),
+      lon: parseFloat(lonMatch[1]),
+    };
+    const nameMatch = /<name>([^<]+)<\/name>/i.exec(content);
+    if (nameMatch) wp.name = nameMatch[1];
+    waypoints.push(wp);
+  }
+  return waypoints;
+}
+
 function calcPerKmStats(trackpoints, step = 100) {
   let dist = 0;
   const perKm = [];
@@ -134,6 +155,7 @@ function calcPerKmStats(trackpoints, step = 100) {
 
 function parseGpx(text) {
   const { trackpoints, highest, lowest } = extractTrackpoints(text);
+  const waypoints = extractWaypoints(text);
   const stats = { points: trackpoints.length };
   if (trackpoints.length > 0) {
     const lats = trackpoints.map((p) => p[0]);
@@ -157,6 +179,7 @@ function parseGpx(text) {
   stats.highest_elevation_m = highest;
   stats.lowest_elevation_m = lowest;
   stats.trackpoints = trackpoints;
+  stats.waypoints = waypoints;
   return stats;
 }
 

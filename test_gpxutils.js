@@ -33,4 +33,10 @@ assert(stats.lowest_elevation_m < 300);
 assert(Math.abs(stats.total_gain_m - stats.total_loss_m) < 1);
 assert(stats.per_km_elevation[0].duration_s > 0);
 
+data = fs.readFileSync("testdata/sample_wp.gpx", "utf8");
+stats = parseGpx(data);
+assert.strictEqual(stats.waypoints.length, 2);
+assert.strictEqual(stats.waypoints[0].name, "WP1");
+assert.strictEqual(stats.waypoints[1].name, "WP2");
+
 console.log("All tests passed");
