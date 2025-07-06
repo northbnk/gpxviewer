@@ -23,12 +23,15 @@
     }
     .stats-grid { display:flex; gap:40px; flex-wrap:wrap; margin-bottom:10px; width:100%; max-width:900px; }
     #layout { display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; justify-content:center; }
-    #left-panel { flex:0 0 600px; max-width:700px; }
+    #left-panel { flex:0 0 900px; max-width:1400px; min-width:320px; }    #center-panel { flex:1 1 300px; max-width:400px; }
+    #right-panel { flex:1 1 300px; max-width:400px; }
+    #layout h2 { margin:10px 0; }
+
     #center-panel { flex:1 1 300px; max-width:400px; }
     #right-panel { flex:1 1 300px; max-width:400px; }
     #layout h2 { margin:10px 0; }
-    #map { width:100%; max-width:700px; height:450px; }
-    #elevChart { width:100%; max-width:700px; height:auto; }
+    #map { width:100%; max-width:900px; height:450px; }
+    #elevChart { width:100%; max-width:900px; height:auto; }
     #perKmTable { width:100%; height:980px; }
     #segmentTable, #predTable, #splitTimesTable { width:100%; }
     .stats-col { flex:1; min-width:200px; line-height:1.2; }
@@ -41,6 +44,18 @@
     #waypointStats td { padding:2px 4px; text-align:right; }
     #waypointStats td.label-cell { text-align:left; font-weight:bold; }
     #waypointStats th.label-cell { text-align:left; font-weight:bold; }
+    @media (max-width: 1900px) {
+      #left-panel, #elevChart, #map, .stats-grid { max-width: 900px; }
+      #left-panel { flex-basis: 900px; }
+    }
+    @media (max-width: 1700px) {
+      #left-panel, #elevChart, #map, .stats-grid { max-width: 700px; }
+      #left-panel { flex-basis: 700px; }
+    }
+    @media (max-width: 900px) {
+      #left-panel, #elevChart, #map, .stats-grid { max-width: 500px; }
+      #left-panel { flex-basis: 500px; }
+    }
   </style>
 </head>
 <body>
@@ -78,7 +93,7 @@
           <option value="<%= v %>" <%= v === initY ? 'selected' : '' %>><%= v %>m</option>
         <% } %>
       </select>
-      <canvas id="elevChart" width="700" height="450"></canvas>
+      <canvas id="elevChart" width="900" height="450"></canvas>
     </div>
     <div id="center-panel">
       <h2>Elevation per KM</h2>
@@ -340,9 +355,9 @@
             { title: 'KM', field: 'km', width: 50, hozAlign: 'right' },
             { title: 'Gain (m)', field: 'gain', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
             { title: 'Loss (m)', field: 'loss', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Actual Time', field: 'actual_time_s', width: 132, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
-            { title: 'Estimated Time', field: 'pred_time_s', width: 158, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
-            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 }
+            { title: 'Actual Time', field: 'actual_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
+            { title: 'Estimated Time', field: 'pred_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
+            { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 45 }
           ]
         });
       }
@@ -352,9 +367,9 @@
           layout: 'fitColumns',
           columns: [
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
-            { title: 'Group', field: 'label', width: 100 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
-            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+            { title: 'Group', field: 'label', width: 110 },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
+            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
           ]
         });
       }
@@ -364,9 +379,9 @@
           layout: 'fitColumns',
           columns: [
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
-            { title: 'Group', field: 'label', editor: false, width: 100 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
-            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 180, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
+            { title: 'Group', field: 'label', editor: false, width: 110 },
+            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
+            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
           ],
           cellEdited: computePredictedTimes
         });
