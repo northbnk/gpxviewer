@@ -636,48 +636,55 @@
 
 <script>
   // Upload form interactions should work even when no GPX data is displayed
-  const dropZoneTop = document.getElementById('dropZoneTop');
-  const fileInputTop = document.getElementById('fileInputTop');
+  document.addEventListener('DOMContentLoaded', function() {
+    const uploadFormTop = document.getElementById('uploadFormTop');
+    const dropZoneTop = document.getElementById('dropZoneTop');
+    const fileInputTop = document.getElementById('fileInputTop');
 
-  function submitGpxFile(file) {
-    const formData = new FormData();
-    formData.append('gpxfile', file);
-    fetch('/upload', { method: 'POST', body: formData })
-      .then(res => res.text())
-      .then(html => {
-        document.open();
-        document.write(html);
-        document.close();
-      });
-  }
-
-  dropZoneTop.addEventListener('click', () => fileInputTop.click());
-  dropZoneTop.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZoneTop.style.background = '#f0f0f0';
-  });
-  dropZoneTop.addEventListener('dragleave', () => {
-    dropZoneTop.style.background = '';
-  });
-  dropZoneTop.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZoneTop.style.background = '';
-    const files = e.dataTransfer.files;
-    if (files && files.length) {
-      submitGpxFile(files[0]);
+    function submitGpxFile(file) {
+      const formData = new FormData();
+      formData.append('gpxfile', file);
+      fetch('/upload', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(html => {
+          document.open();
+          document.write(html);
+          document.close();
+        });
     }
-  });
-  fileInputTop.addEventListener('change', () => {
-    if (fileInputTop.files.length) submitGpxFile(fileInputTop.files[0]);
-  });
 
-  // Prevent unintended navigation when dropping files outside the zone
-  document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop', e => {
-    if (!dropZoneTop.contains(e.target)) {
+    dropZoneTop.addEventListener('click', () => fileInputTop.click());
+    dropZoneTop.addEventListener('dragover', e => {
       e.preventDefault();
-    }
+      dropZoneTop.style.background = '#f0f0f0';
+    });
+    dropZoneTop.addEventListener('dragleave', () => {
+      dropZoneTop.style.background = '';
+    });
+    dropZoneTop.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZoneTop.style.background = '';
+      const files = e.dataTransfer.files;
+      if (files && files.length) {
+        submitGpxFile(files[0]);
+      }
+    });
+    fileInputTop.addEventListener('change', () => {
+      if (fileInputTop.files.length) submitGpxFile(fileInputTop.files[0]);
+    });
+    // Prevent unintended navigation when dropping files outside the zone
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => {
+      if (!dropZoneTop.contains(e.target)) {
+        e.preventDefault();
+      }
+    });
+    // Enable submit by form (e.g. Enter key)
+    uploadFormTop.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (fileInputTop.files.length) submitGpxFile(fileInputTop.files[0]);
+    });
   });
-</script>
+  </script>
 </body>
 </html>
