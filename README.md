@@ -30,6 +30,8 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
    set `OPENAI_API_KEY` in the environment. A "Generate Text Report" button
    appears on the result page and will call the OpenAI API to create a short
    report describing the run.
+6. Use the "Dark mode" button next to the upload field to switch between light
+   and dark themes.
 
 ### Command line analysis
 
