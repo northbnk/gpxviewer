@@ -93,6 +93,10 @@
       <div class="stat-row"><span class="stat-label">Total loss:</span><span class="stat-value"><%= stats.total_loss_m.toFixed(1) %> m</span></div>
     </div>
   </div>
+  <div style="margin:10px 0;">
+    <button id="generateAnalysisBtn">Generate Text Report</button>
+    <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;"></div>
+  </div>
   <div id="layout">
     <div id="left-panel">
       <h2>Track</h2>
@@ -138,6 +142,7 @@
     const segmentData = <%- JSON.stringify(segmentSummary || {}) %>;
     const predictedData = JSON.parse(JSON.stringify(segmentData.summary || []));
     const gpxWaypoints = <%- JSON.stringify(stats.waypoints || []) %>;
+    const statsData = <%- JSON.stringify(stats) %>;
 
     function addTrendInfo(arr) {
       arr.forEach(row => {
@@ -637,6 +642,23 @@
 
   document.getElementById('refreshRateBtn').addEventListener('click', function() {
     computePredictedTimes();
+  });
+
+  document.getElementById('generateAnalysisBtn').addEventListener('click', function() {
+    const resultEl = document.getElementById('analysisResult');
+    resultEl.textContent = 'Generating...';
+    fetch('/generate-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stats: statsData })
+    })
+      .then(res => res.json())
+      .then(data => {
+        resultEl.textContent = data.text || 'Failed to generate';
+      })
+      .catch(() => {
+        resultEl.textContent = 'Error generating analysis';
+      });
   });
 
 </script>
