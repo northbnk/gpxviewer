@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const { parseGpx, analyzeSegments } = require("./gpxutils.js");
+const { parseGpx, summarizeStats, analyzeSegments } = require("./gpxutils.js");
 
 function augmentStats(stats) {
   if (stats.trackpoints && stats.trackpoints.length > 1) {
@@ -22,7 +22,7 @@ function augmentStats(stats) {
   return stats;
 }
 
-function buildPrompt(stats) {
+function buildPrompt(summary) {
   return `あなたは優秀なトレイルランニングコーチ兼アナリストです。以下のGPXデータを分析し、事実に基づく具体的な説明を文章で伝えてください。表やグラフは不要です。
 
 【求める内容】
@@ -37,7 +37,7 @@ function buildPrompt(stats) {
 - 表やグラフなどの視覚的な要素は使わない
 - 客観的かつわかりやすい文章で、選手に伝えるレポートのようにまとめる
 
-GPX統計データ: ${JSON.stringify(stats)}
+GPX統計データ: ${JSON.stringify(summary)}
 `;
 }
 
@@ -92,7 +92,7 @@ app.post("/generate-analysis", async (req, res) => {
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: buildPrompt(stats) }],
+        messages: [{ role: "user", content: buildPrompt(summarizeStats(stats)) }],
       }),
     });
     const data = await response.json();
