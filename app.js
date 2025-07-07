@@ -91,12 +91,16 @@ app.post("/generate-analysis", async (req, res) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: buildPrompt(summarizeStats(stats)) }],
       }),
     });
     const data = await response.json();
-    const text = data.choices && data.choices[0]?.message?.content;
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      console.error("Invalid OpenAI response:", data);
+      return res.status(500).json({ error: "Invalid response from OpenAI" });
+    }
+    const text = data.choices[0].message.content;
     res.json({ text });
   } catch (err) {
     console.error(err);
