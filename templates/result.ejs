@@ -73,6 +73,7 @@
       #map, #elevChart { height: 200px; }
     }
   </style>
+  <%- include('_favicon.ejs') %>
 </head>
 <body>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -99,7 +100,7 @@
   </div>
   <div style="margin:10px 0;">
     <button id="generateAnalysisBtn">Generate Text Report</button>
-    <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;max-width:700px;margin-left:auto;margin-right:auto;padding:10px;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.2);"></div>
+    <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;max-width:700px;margin-left:auto;margin-right:auto;padding:10px;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.2);display:none;text-align:left;"></div>
   </div>
   <div id="layout">
     <div id="left-panel">
@@ -661,6 +662,8 @@
 
   document.getElementById('generateAnalysisBtn').addEventListener('click', function() {
     const resultEl = document.getElementById('analysisResult');
+    resultEl.style.display = 'block';
+    resultEl.style.textAlign = 'left';
     resultEl.textContent = 'Generating...';
     fetch('/generate-analysis', {
       method: 'POST',

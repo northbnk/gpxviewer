@@ -43,6 +43,7 @@ GPX統計データ: ${JSON.stringify(summary)}
 
 const app = express();
 app.use(express.json({ limit: "5mb" }));
+app.use(express.static(__dirname));
 const upload = multer();
 
 app.set("view engine", "ejs");
