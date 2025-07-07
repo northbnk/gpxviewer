@@ -274,22 +274,30 @@ function analyzeSegments(stats, interval = 500) {
   return { segments, summary };
 }
 
+function round2(val) {
+  return val == null ? null : Math.round(val * 100) / 100;
+}
+
 function summarizeStats(stats) {
   const result = {
-    total_distance_km: stats.distance_m ? stats.distance_m / 1000 : null,
-    total_ascent_m: stats.total_gain_m,
-    total_descent_m: stats.total_loss_m,
-    highest_elevation_m: stats.highest_elevation_m,
-    lowest_elevation_m: stats.lowest_elevation_m,
+    total_distance_km: stats.distance_m ? round2(stats.distance_m / 1000) : null,
+    total_ascent_m: round2(stats.total_gain_m),
+    total_descent_m: round2(stats.total_loss_m),
+    highest_elevation_m: round2(stats.highest_elevation_m),
+    lowest_elevation_m: round2(stats.lowest_elevation_m),
   };
   const { segments } = analyzeSegments(stats, 1000);
   if (stats.trackpoints && stats.trackpoints.length > 1) {
     const times = stats.trackpoints.map(p => p[3]).filter(t => t != null);
     if (times.length >= 2) {
       const totalTime = (times[times.length - 1] - times[0]) / 1000;
-      result.total_time_s = totalTime;
+      result.total_time_s = round2(totalTime);
+      const h = Math.floor(totalTime / 3600);
+      const m = Math.floor((totalTime % 3600) / 60);
+      const s = Math.round((totalTime % 60) * 100) / 100;
+      result.total_time_hms = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${s.toFixed(2).padStart(5, '0')}`;
       if (stats.distance_m) {
-        result.average_pace_min_per_km = (totalTime / 60) / (stats.distance_m / 1000);
+        result.average_pace_min_per_km = round2((totalTime / 60) / (stats.distance_m / 1000));
       }
     }
   }
@@ -321,14 +329,14 @@ function summarizeStats(stats) {
     if (seg.up_rate >= 10) steepUp += 1;
     if (seg.down_rate >= 10) steepDown += 1;
   });
-  result.max_pace_min_per_km = maxPace;
-  result.min_pace_min_per_km = minPace;
-  result.up_distance_km = upDist / 1000;
-  result.up_avg_pace_min_per_km = upTime > 0 ? (upTime / 60) / (upDist / 1000) : null;
-  result.down_distance_km = downDist / 1000;
-  result.down_avg_pace_min_per_km = downTime > 0 ? (downTime / 60) / (downDist / 1000) : null;
-  result.flat_distance_km = flatDist / 1000;
-  result.flat_avg_pace_min_per_km = flatTime > 0 ? (flatTime / 60) / (flatDist / 1000) : null;
+  result.max_pace_min_per_km = round2(maxPace);
+  result.min_pace_min_per_km = round2(minPace);
+  result.up_distance_km = round2(upDist / 1000);
+  result.up_avg_pace_min_per_km = upTime > 0 ? round2((upTime / 60) / (upDist / 1000)) : null;
+  result.down_distance_km = round2(downDist / 1000);
+  result.down_avg_pace_min_per_km = downTime > 0 ? round2((downTime / 60) / (downDist / 1000)) : null;
+  result.flat_distance_km = round2(flatDist / 1000);
+  result.flat_avg_pace_min_per_km = flatTime > 0 ? round2((flatTime / 60) / (flatDist / 1000)) : null;
   result.steep_up_count = steepUp;
   result.steep_down_count = steepDown;
   const n = pacePerKm.length;
@@ -338,8 +346,8 @@ function summarizeStats(stats) {
     f5time += seg.duration_s || 0;
     f5dist += seg.dist_m;
   }
-  result.final5km_avg_pace_min_per_km = f5time > 0 ? (f5time / 60) / (f5dist / 1000) : null;
-  result.pace_per_km = pacePerKm;
+  result.final5km_avg_pace_min_per_km = f5time > 0 ? round2((f5time / 60) / (f5dist / 1000)) : null;
+  result.pace_per_km = pacePerKm.map(p => p == null ? null : round2(p));
   return result;
 }
 module.exports = {
