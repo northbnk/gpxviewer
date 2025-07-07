@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>GPX Result</title>
+  <title>GPX解析結果</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
@@ -104,38 +104,38 @@
 </head>
 <body>
   <div style="display:flex;align-items:center;gap:10px;">
-    <h1 style="margin:0;">GPX Analysis</h1>
+    <h1 style="margin:0;">GPX解析</h1>
     <form id="uploadFormTop" action="/upload" method="post" enctype="multipart/form-data" style="margin:0;">
       <div id="dropZoneTop" style="width:150px;height:40px;border:2px dashed #aaa;display:flex;align-items:center;justify-content:center;font-size:0.9em;cursor:pointer;">
-        Drop GPX here
+        ここにGPXをドロップ
       </div>
       <input type="file" id="fileInputTop" name="gpxfile" accept=".gpx" style="display:none">
     </form>
-    <button id="themeToggleBtn" type="button">Dark mode</button>
+    <button id="themeToggleBtn" type="button">ダークモード</button>
   </div>
   <% if (stats.points) { %>
   <div class="stats-grid">
     <div class="stats-col">
-      <div class="stat-row"><span class="stat-label">Total trackpoints:</span><span class="stat-value"><%= stats.points %></span></div>
-      <div class="stat-row"><span class="stat-label">Total distance:</span><span class="stat-value"><%= (stats.distance_m/1000).toFixed(1) %> km</span></div>
-      <div class="stat-row"><span class="stat-label">Highest elevation:</span><span class="stat-value"><%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</span></div>
+      <div class="stat-row"><span class="stat-label">トラックポイント数:</span><span class="stat-value"><%= stats.points %></span></div>
+      <div class="stat-row"><span class="stat-label">総距離:</span><span class="stat-value"><%= (stats.distance_m/1000).toFixed(1) %> km</span></div>
+      <div class="stat-row"><span class="stat-label">最高高度:</span><span class="stat-value"><%= stats.highest_elevation_m != null ? stats.highest_elevation_m.toFixed(1) : 'N/A' %> m</span></div>
     </div>
     <div class="stats-col">
-      <div class="stat-row"><span class="stat-label">Lowest elevation:</span><span class="stat-value"><%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</span></div>
-      <div class="stat-row"><span class="stat-label">Total gain:</span><span class="stat-value"><%= stats.total_gain_m.toFixed(1) %> m</span></div>
-      <div class="stat-row"><span class="stat-label">Total loss:</span><span class="stat-value"><%= stats.total_loss_m.toFixed(1) %> m</span></div>
+      <div class="stat-row"><span class="stat-label">最低高度:</span><span class="stat-value"><%= stats.lowest_elevation_m != null ? stats.lowest_elevation_m.toFixed(1) : 'N/A' %> m</span></div>
+      <div class="stat-row"><span class="stat-label">累積上昇:</span><span class="stat-value"><%= stats.total_gain_m.toFixed(1) %> m</span></div>
+      <div class="stat-row"><span class="stat-label">累積下降:</span><span class="stat-value"><%= stats.total_loss_m.toFixed(1) %> m</span></div>
     </div>
   </div>
   <div style="margin:10px 0;">
-    <button id="generateAnalysisBtn">Generate Text Report</button>
+    <button id="generateAnalysisBtn">テキストレポート生成</button>
     <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;max-width:700px;margin-left:auto;margin-right:auto;padding:10px;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.2);display:none;text-align:left;"></div>
   </div>
   <div id="layout">
     <div id="left-panel">
-      <h2>Track</h2>
+      <h2>トラック</h2>
       <div id="map" style="border:1px solid #ccc; height:450px;"></div>
-      <h2>Elevation Profile</h2>
-      <label for="yScale">Elevation Max:</label>
+      <h2>標高プロファイル</h2>
+      <label for="yScale">標高上限:</label>
       <select id="yScale">
         <% const initY = Math.min(3000, Math.max(500, Math.ceil((stats.highest_elevation_m || 0) / 500) * 500)); %>
         <% for (let v = 500; v <= 3000; v += 500) { %>
@@ -145,27 +145,27 @@
       <canvas id="elevChart" width="900" height="450"></canvas>
     </div>
     <div id="center-panel">
-      <h2>Elevation per KM</h2>
+      <h2>1kmごとの標高</h2>
       <div id="perKmTable" style="height:980px;"></div>
     </div>
     <div id="right-panel">
-      <h2>Rate Groups</h2>
+      <h2>速度グループ</h2>
       <div id="segmentTable"></div>
-      <button id="downloadRateBtn">Download JSON</button>
-      <h2 style="margin-top:20px;">Estimated Rate</h2>
+      <button id="downloadRateBtn">JSONダウンロード</button>
+      <h2 style="margin-top:20px;">推定速度</h2>
       <div id="predTable"></div>
       <input type="file" id="rateFileInput" accept=".json" style="display:none">
       <div style="margin-top:5px;display:flex;gap:5px;align-items:center;">
-        <button id="uploadRateBtn">Upload JSON</button>
-        <button id="refreshRateBtn">Refresh</button>
+        <button id="uploadRateBtn">JSONアップロード</button>
+        <button id="refreshRateBtn">更新</button>
       </div>
       <div id="splitTimesTable" style="margin-top:10px;"></div>
     </div>
   </div>
 
   <div id="waypointsSection" style="width:100%;margin-top:20px;">
-    <h2>Waypoints</h2>
-    <button id="clearWaypointsBtn">Clear</button>
+    <h2>ウェイポイント</h2>
+    <button id="clearWaypointsBtn">クリア</button>
     <div id="waypointStats"></div>
   </div>
   <script>
@@ -340,10 +340,10 @@
       Chart.register(rangeHighlight);
       chart = new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Elevation (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
+        data: { labels, datasets: [{ label: '標高 (m)', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
         options: {
           interaction: { mode: 'nearest', intersect: false },
-          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' }, min: 0, max: yMax } },
+          scales: { x: { title: { display: true, text: '距離 (km)' } }, y: { title: { display: true, text: '標高 (m)' }, min: 0, max: yMax } },
           responsive: false,
           maintainAspectRatio: false,
           plugins: {
@@ -353,21 +353,21 @@
                   if (!ctx.length) return '';
                   const idx = ctx[0].dataIndex;
                   const distKm = (points[idx][4] / 1000).toFixed(2);
-                  return `Distance: ${distKm} km`;
+                  return `距離: ${distKm} km`;
                 },
                 label: ctx => {
                   const idx = ctx.dataIndex;
                   const ele = points[idx][2];
-                  const lines = [`Elevation: ${ele != null ? ele.toFixed(1) : 'N/A'} m`];
+                  const lines = [`標高: ${ele != null ? ele.toFixed(1) : 'N/A'} m`];
                   const prev = lastWaypointIndex(idx);
                   if (prev < idx) {
                     const stats = computeStats(prev, idx);
                     if (stats) {
-                      lines.push(`Gain: ${stats.gain_m.toFixed(1)} m`);
-                      lines.push(`Loss: ${stats.loss_m.toFixed(1)} m`);
+                      lines.push(`上昇: ${stats.gain_m.toFixed(1)} m`);
+                      lines.push(`下降: ${stats.loss_m.toFixed(1)} m`);
                       const dist = stats.dist_m;
                       const inc = dist > 0 ? ((points[idx][2] - points[prev][2]) / dist * 100).toFixed(2) : '0.00';
-                      lines.push(`Inclination: ${inc} %`);
+                      lines.push(`勾配: ${inc} %`);
                     }
                   }
                   return lines;
@@ -409,10 +409,10 @@
           },
           columns: [
             { title: 'KM', field: 'km', width: 50, hozAlign: 'right' },
-            { title: 'Gain (m)', field: 'gain', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Loss (m)', field: 'loss', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
-            { title: 'Actual Time', field: 'actual_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
-            { title: 'Estimated Time', field: 'pred_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
+            { title: '上昇 (m)', field: 'gain', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
+            { title: '下降 (m)', field: 'loss', width: 70, hozAlign: 'right', formatter: cell => cell.getValue().toFixed(1) },
+            { title: '実時間', field: 'actual_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
+            { title: '推定時間', field: 'pred_time_s', width: 75, hozAlign: 'right', formatter: cell => formatTime(cell.getValue()) },
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 45 }
           ]
         });
@@ -423,9 +423,9 @@
           layout: 'fitColumns',
           columns: [
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
-            { title: 'Group', field: 'label', width: 110 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
-            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
+            { title: 'グループ', field: 'label', width: 110 },
+            { title: '平均ネット率 (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) },
+            { title: '平均ペース (分/km)', field: 'avg_pace', width: 120, hozAlign: 'right', formatter: cell => cell.getValue() == null ? '-' : cell.getValue().toFixed(2) }
           ]
         });
       }
@@ -435,9 +435,9 @@
           layout: 'fitColumns',
           columns: [
             { title: '', field: 'trend', formatter: 'html', hozAlign: 'center', width: 50 },
-            { title: 'Group', field: 'label', editor: false, width: 110 },
-            { title: 'Avg Net Rate (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
-            { title: 'Avg Pace (min/km)', field: 'avg_pace', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
+            { title: 'グループ', field: 'label', editor: false, width: 110 },
+            { title: '平均ネット率 (%)', field: 'avg_net_rate', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) },
+            { title: '平均ペース (分/km)', field: 'avg_pace', width: 120, hozAlign: 'right', editor: 'number', editorParams: { step: 0.01 }, formatter: cell => cell.getValue() == null ? '-' : Number(cell.getValue()).toFixed(2) }
           ],
           cellEdited: computePredictedTimes
         });
@@ -477,7 +477,7 @@
       const h = Math.floor(sec / 3600);
       const m = Math.floor((sec % 3600) / 60);
       const s = Math.round(sec % 60);
-      return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
+      return (h ? h + '時間 ' : '') + m + '分 ' + s + '秒';
     }
 
     function predictedTimeSeconds(dist, netRate) {
@@ -521,14 +521,14 @@
           rows.push({ distance: `${idx + 1} km`, time: formatTime(cum) });
         }
       });
-      rows.push({ distance: 'Finish', time: formatTime(cum) });
+      rows.push({ distance: 'ゴール', time: formatTime(cum) });
       if (!splitTimesTable) {
         splitTimesTable = new Tabulator('#splitTimesTable', {
           data: rows,
           layout: 'fitColumns',
           columns: [
-            { title: 'Distance', field: 'distance', hozAlign: 'right' },
-            { title: 'Predicted Time', field: 'time', hozAlign: 'right' }
+            { title: '距離', field: 'distance', hozAlign: 'right' },
+            { title: '予測時間', field: 'time', hozAlign: 'right' }
           ]
         });
       } else {
@@ -570,10 +570,10 @@
       const table = document.createElement('table');
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
-      headRow.innerHTML = '<th class="label-cell">Name</th>';
+      headRow.innerHTML = '<th class="label-cell">名称</th>';
       segs.forEach((seg, i) => {
-        const startLabel = i === 0 ? 'Start' : `WP${i}`;
-        const endLabel = i === segs.length - 1 ? 'Finish' : `WP${i+1}`;
+        const startLabel = i === 0 ? 'スタート' : `WP${i}`;
+        const endLabel = i === segs.length - 1 ? 'ゴール' : `WP${i+1}`;
         headRow.innerHTML += `<th>${startLabel}-${endLabel}</th>`;
       });
       thead.appendChild(headRow);
@@ -581,11 +581,11 @@
 
       const tbody = document.createElement('tbody');
       const rows = [
-        { label: 'Distance', format: seg => `${(seg.dist_m/1000).toFixed(1)} km` },
-        { label: 'Elevation Gain', format: seg => `${seg.gain_m.toFixed(1)} m` },
-        { label: 'Elevation Loss', format: seg => `${seg.loss_m.toFixed(1)} m` },
-        { label: 'Average Up', format: seg => `${seg.avg_up.toFixed(2)} %` },
-        { label: 'Average Down', format: seg => `${seg.avg_down.toFixed(2)} %` }
+        { label: '距離', format: seg => `${(seg.dist_m/1000).toFixed(1)} km` },
+        { label: '上昇量', format: seg => `${seg.gain_m.toFixed(1)} m` },
+        { label: '下降量', format: seg => `${seg.loss_m.toFixed(1)} m` },
+        { label: '平均上り', format: seg => `${seg.avg_up.toFixed(2)} %` },
+        { label: '平均下り', format: seg => `${seg.avg_down.toFixed(2)} %` }
       ];
 
       rows.forEach(info => {
@@ -677,7 +677,7 @@
           computePredictedTimes();
         }
       } catch(err) {
-        alert('Invalid JSON');
+        alert('JSONが不正です');
       }
     };
     reader.readAsText(file);
@@ -692,7 +692,7 @@
     const resultEl = document.getElementById('analysisResult');
     resultEl.style.display = 'block';
     resultEl.style.textAlign = 'left';
-    resultEl.textContent = 'Generating...';
+    resultEl.textContent = '生成中...';
     fetch('/generate-analysis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -703,11 +703,11 @@
         if (data.text) {
           resultEl.innerHTML = marked.parse(data.text);
         } else {
-          resultEl.textContent = 'Failed to generate';
+          resultEl.textContent = '生成に失敗しました';
         }
       })
       .catch(() => {
-        resultEl.textContent = 'Error generating analysis';
+        resultEl.textContent = '解析生成エラー';
       });
   });
 
@@ -715,7 +715,7 @@
 <% if (googleMapsApiKey) { %>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
 <% } else { %>
-<p style="color:red">Google Maps API key not set</p>
+<p style="color:red">Google Maps APIキーが設定されていません</p>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     initChart();
@@ -727,7 +727,7 @@
 </script>
 <% } %>
   <% } else { %>
-  <p>Please upload a GPX file using the drop zone above.</p>
+  <p>上のドロップゾーンにGPXファイルをアップロードしてください。</p>
   <% } %>
 
 <script>
@@ -742,17 +742,17 @@
       const dark = localStorage.getItem('theme') === 'dark';
       if (dark) {
         document.body.classList.add('dark-mode');
-        themeToggle.textContent = 'Light mode';
+        themeToggle.textContent = 'ライトモード';
       } else {
         document.body.classList.remove('dark-mode');
-        themeToggle.textContent = 'Dark mode';
+        themeToggle.textContent = 'ダークモード';
       }
     };
     applyTheme();
     themeToggle.addEventListener('click', () => {
       const dark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('theme', dark ? 'dark' : 'light');
-      themeToggle.textContent = dark ? 'Light mode' : 'Dark mode';
+      themeToggle.textContent = dark ? 'ライトモード' : 'ダークモード';
     });
 
     function submitGpxFile(file) {
