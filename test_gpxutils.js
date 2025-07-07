@@ -1,6 +1,6 @@
 const fs = require("fs");
 const assert = require("assert");
-const { parseGpx } = require("./gpxutils.js");
+const { parseGpx, summarizeStats } = require("./gpxutils.js");
 
 let data = fs.readFileSync("testdata/sample.gpx", "utf8");
 let stats = parseGpx(data);
@@ -32,6 +32,11 @@ assert(stats.highest_elevation_m > 1000);
 assert(stats.lowest_elevation_m < 300);
 assert(Math.abs(stats.total_gain_m - stats.total_loss_m) < 1);
 assert(stats.per_km_elevation[0].duration_s > 0);
+
+const summary = summarizeStats(stats);
+assert(summary.total_distance_km > 50);
+assert.strictEqual(summary.pace_per_km.length, stats.per_km_elevation.length);
+assert(summary.max_pace_min_per_km <= summary.min_pace_min_per_km);
 
 data = fs.readFileSync("testdata/sample_wp.gpx", "utf8");
 stats = parseGpx(data);
