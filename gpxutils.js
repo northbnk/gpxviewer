@@ -211,17 +211,19 @@ function analyzeSlopeTime(stats, upThreshold, downThreshold) {
 function analyzeSegments(stats, interval = 500) {
   const { perKm } = calcPerKmStats(stats.trackpoints, interval);
   const segments = [];
-  for (let i = 0; i < perKm.length; i++) {
+  const numSegs = Math.ceil(stats.distance_m / interval);
+  for (let i = 0; i < numSegs; i++) {
+    const kmData = perKm[i] || {};
     const segDist =
-      i === perKm.length - 1
+      i === numSegs - 1
         ? Math.max(0, stats.distance_m - i * interval)
         : interval;
-    const gain = perKm[i].gain;
-    const loss = perKm[i].loss;
+    const gain = kmData.gain || 0;
+    const loss = kmData.loss || 0;
     const upRate = segDist > 0 ? (gain / segDist) * 100 : 0;
     const downRate = segDist > 0 ? (loss / segDist) * 100 : 0;
     const netRate = upRate - downRate;
-    const duration = perKm[i].duration_s;
+    const duration = kmData.duration_s;
     const pace =
       duration && segDist > 0 ? duration / 60 / (segDist / 1000) : null;
     segments.push({
@@ -238,13 +240,19 @@ function analyzeSegments(stats, interval = 500) {
   }
 
   const ranges = [
-    { label: "[-40% -    ]", min: -Infinity, max: -40, segs: [] },
-    { label: "[-20% - -40%]", min: -40, max: -20, segs: [] },
-    { label: "[ -5% - -20%]", min: -20, max: -5, segs: [] },
+    { label: "[-50% -    ]", min: -Infinity, max: -50, segs: [] },
+    { label: "[-40% - -50%]", min: -50, max: -40, segs: [] },
+    { label: "[-30% - -40%]", min: -40, max: -30, segs: [] },
+    { label: "[-20% - -30%]", min: -30, max: -20, segs: [] },
+    { label: "[-10% - -20%]", min: -20, max: -10, segs: [] },
+    { label: "[ -5% - -10%]", min: -10, max: -5, segs: [] },
     { label: "[-5%  -   5%]", min: -5, max: 5, segs: [] },
-    { label: "[5%  -  20%]", min: 5, max: 20, segs: [] },
-    { label: "[20% -  40%]", min: 20, max: 40, segs: [] },
-    { label: "[40% -    ]", min: 40, max: Infinity, segs: [] },
+    { label: "[5%  -  10%]", min: 5, max: 10, segs: [] },
+    { label: "[10% -  20%]", min: 10, max: 20, segs: [] },
+    { label: "[20% -  30%]", min: 20, max: 30, segs: [] },
+    { label: "[30% -  40%]", min: 30, max: 40, segs: [] },
+    { label: "[40% -  50%]", min: 40, max: 50, segs: [] },
+    { label: "[50% -    ]", min: 50, max: Infinity, segs: [] },
   ];
 
   segments.forEach((seg) => {

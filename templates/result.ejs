@@ -10,9 +10,13 @@
     .up1 { color: #6bc56b; }
     .up2 { color: #2e8b57; }
     .up3 { color: #006400; }
+    .up4 { color: #004b00; }
+    .up5 { color: #002b00; }
     .down1 { color: #e9967a; }
     .down2 { color: #cd5c5c; }
     .down3 { color: #8b0000; }
+    .down4 { color: #7a0000; }
+    .down5 { color: #3f0000; }
     .flat { color: #808080; }
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -95,7 +99,7 @@
   </div>
   <div style="margin:10px 0;">
     <button id="generateAnalysisBtn">Generate Text Report</button>
-    <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;"></div>
+    <div id="analysisResult" style="white-space:pre-wrap;margin-top:10px;max-width:700px;margin-left:auto;margin-right:auto;padding:10px;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.2);"></div>
   </div>
   <div id="layout">
     <div id="left-panel">
@@ -148,14 +152,18 @@
       arr.forEach(row => {
         const diff = (row.gain && row.loss) != null ? (row.gain - row.loss) : row.avg_net_rate;
         let icon, cls;
-        if (diff > 5) {
+        if (diff > 10) {
           icon = 'trending_up';
-          if (diff > 40) cls = 'up3';
+          if (diff > 50) cls = 'up5';
+          else if (diff > 40) cls = 'up4';
+          else if (diff > 30) cls = 'up3';
           else if (diff > 20) cls = 'up2';
           else cls = 'up1';
-        } else if (diff < -5) {
+        } else if (diff < -10) {
           icon = 'trending_down';
-          if (diff < -40) cls = 'down3';
+          if (diff < -50) cls = 'down5';
+          else if (diff < -40) cls = 'down4';
+          else if (diff < -30) cls = 'down3';
           else if (diff < -20) cls = 'down2';
           else cls = 'down1';
         } else {
@@ -172,6 +180,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     let chart, map, marker, rangePolyline;
     const hoverLine = {
@@ -408,13 +417,19 @@
     }
 
     const ranges = [
-      { label: '[-40% -    ]', min: -Infinity, max: -40 },
-      { label: '[-20% - -40%]', min: -40, max: -20 },
-      { label: '[ -5% - -20%]', min: -20, max: -5 },
+      { label: '[-50% -    ]', min: -Infinity, max: -50 },
+      { label: '[-40% - -50%]', min: -50, max: -40 },
+      { label: '[-30% - -40%]', min: -40, max: -30 },
+      { label: '[-20% - -30%]', min: -30, max: -20 },
+      { label: '[-10% - -20%]', min: -20, max: -10 },
+      { label: '[ -5% - -10%]', min: -10, max: -5 },
       { label: '[-5%  -   5%]', min: -5, max: 5 },
-      { label: '[5%  -  20%]', min: 5, max: 20 },
-      { label: '[20% -  40%]', min: 20, max: 40 },
-      { label: '[40% -    ]', min: 40, max: Infinity }
+      { label: '[5%  -  10%]', min: 5, max: 10 },
+      { label: '[10% -  20%]', min: 10, max: 20 },
+      { label: '[20% -  30%]', min: 20, max: 30 },
+      { label: '[30% -  40%]', min: 30, max: 40 },
+      { label: '[40% -  50%]', min: 40, max: 50 },
+      { label: '[50% -    ]', min: 50, max: Infinity }
     ];
     let waypoints = [];
     let wpMarkers = [];
@@ -654,7 +669,11 @@
     })
       .then(res => res.json())
       .then(data => {
-        resultEl.textContent = data.text || 'Failed to generate';
+        if (data.text) {
+          resultEl.innerHTML = marked.parse(data.text);
+        } else {
+          resultEl.textContent = 'Failed to generate';
+        }
       })
       .catch(() => {
         resultEl.textContent = 'Error generating analysis';
