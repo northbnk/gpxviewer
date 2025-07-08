@@ -65,6 +65,14 @@ app.get("/vue", (req, res) => {
   res.render("vue");
 });
 
+app.get("/vuetify", (req, res) => {
+  const apiKey =
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLEMAPS_API_KEY ||
+    process.env.GOOGLE_MAP_API_KEY;
+  res.render("vuetify", { googleMapsApiKey: apiKey });
+});
+
 app.post("/upload", upload.single("gpxfile"), async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded");
