@@ -116,9 +116,10 @@ createApp({
   },
   methods: {
     submit() {
-      if (!this.file) return;
+      const file = Array.isArray(this.file) ? this.file[0] : this.file;
+      if (!file) return;
       const formData = new FormData();
-      formData.append('gpxfile', this.file);
+      formData.append('gpxfile', file);
       fetch('/api/upload', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
