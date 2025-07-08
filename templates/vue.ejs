@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GPX Viewer - Vue</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>GPX Viewer (Vue)</h1>
+    <input type="file" @change="upload" accept=".gpx">
+    <div v-if="stats">
+      <h2>Summary</h2>
+      <ul>
+        <li>Total distance: {{ stats.total_distance_km }} km</li>
+        <li>Total gain: {{ stats.total_gain_m }} m</li>
+        <li>Total loss: {{ stats.total_loss_m }} m</li>
+        <li>Highest elevation: {{ stats.highest_elevation_m }} m</li>
+        <li>Lowest elevation: {{ stats.lowest_elevation_m }} m</li>
+      </ul>
+    </div>
+  </div>
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    return { stats: null };
+  },
+  methods: {
+    upload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('gpxfile', file);
+      fetch('/api/upload', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => { this.stats = data.stats; })
+        .catch(() => { alert('Failed to parse GPX'); });
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

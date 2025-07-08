@@ -61,6 +61,10 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/vue", (req, res) => {
+  res.render("vue");
+});
+
 app.post("/upload", upload.single("gpxfile"), async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded");
@@ -75,6 +79,19 @@ app.post("/upload", upload.single("gpxfile"), async (req, res) => {
     res.render("result", { stats, googleMapsApiKey: apiKey, segmentSummary });
   } catch (err) {
     res.status(400).send("Failed to parse GPX");
+  }
+});
+
+app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file" });
+  }
+  try {
+    const stats = parseGpx(req.file.buffer.toString());
+    const segmentSummary = analyzeSegments(stats);
+    res.json({ stats, segmentSummary });
+  } catch (err) {
+    res.status(400).json({ error: "Failed to parse" });
   }
 });
 
