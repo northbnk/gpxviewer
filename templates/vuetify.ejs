@@ -45,17 +45,17 @@
           </v-row>
 
           <v-tabs v-model="tab" class="mt-4">
-            <v-tab value="0">統計情報・予測</v-tab>
-            <v-tab value="1">地図・高低差</v-tab>
+            <v-tab :value="0">統計情報・予測</v-tab>
+            <v-tab :value="1">地図・高低差</v-tab>
           </v-tabs>
           <v-window v-model="tab">
-            <v-window-item value="0" class="mt-4">
+            <v-window-item :value="0" class="mt-4">
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="predictedData" :headers="rateHeaders" density="compact"></v-data-table>
             </v-window-item>
-            <v-window-item value="1" class="mt-4">
+            <v-window-item :value="1" class="mt-4">
               <div id="map" class="mb-4"></div>
               <canvas id="chart"></canvas>
             </v-window-item>
