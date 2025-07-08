@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GPX Vuetify</title>
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    #map { height: 400px; }
+    #chart { height: 300px; }
+  </style>
+  <%- include('_favicon.ejs') %>
+</head>
+<body>
+<div id="app">
+  <v-app>
+    <v-app-bar app color="primary" dark>
+      <v-toolbar-title>
+        <v-icon class="mr-2">mdi-map</v-icon>GPX Analysis
+      </v-toolbar-title>
+    </v-app-bar>
+    <v-main>
+      <v-container class="mt-4">
+        <v-expansion-panels v-model="uploaderPanel">
+          <v-expansion-panel>
+            <v-expansion-panel-title>Upload GPX</v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
+              <v-btn color="primary" class="mt-2" @click="submit">Upload</v-btn>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+
+        <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
+          <v-row>
+            <v-col cols="12" sm="6" v-for="(value, key) in summaryStats" :key="key">
+              <v-card>
+                <v-card-title>{{ key }}</v-card-title>
+                <v-card-text>{{ value }}</v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-tabs v-model="tab" class="mt-4">
+            <v-tab value="0">統計情報・予測</v-tab>
+            <v-tab value="1">地図・高低差</v-tab>
+          </v-tabs>
+          <v-tabs-window v-model="tab">
+            <v-tab-item value="0" class="mt-4">
+              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="rateGroups" :headers="segmentHeaders" density="compact"></v-data-table>
+            </v-tab-item>
+            <v-tab-item value="1" class="mt-4">
+              <div id="map" class="mb-4"></div>
+              <canvas id="chart"></canvas>
+            </v-tab-item>
+          </v-tabs-window>
+        </div>
+      </v-container>
+    </v-main>
+  </v-app>
+</div>
+<script>
+const { createApp } = Vue;
+const vuetify = Vuetify.createVuetify();
+createApp({
+  data() {
+    return {
+      file: null,
+      stats: {},
+      segmentSummary: null,
+      uploaderPanel: 0,
+      tab: 0
+    };
+  },
+  computed: {
+    summaryStats() {
+      if (!this.stats.trackpoints) return {};
+      return {
+        'Total trackpoints': this.stats.trackpoints.length,
+        'Total distance': (this.stats.distance_m/1000).toFixed(2) + ' km',
+        'Highest elevation': this.stats.highest_elevation_m.toFixed(1) + ' m',
+        'Lowest elevation': this.stats.lowest_elevation_m.toFixed(1) + ' m',
+        'Total gain': this.stats.total_gain_m.toFixed(1) + ' m',
+        'Total loss': this.stats.total_loss_m.toFixed(1) + ' m'
+      };
+    },
+    perKmData() { return this.stats.per_km_elevation || []; },
+    rateGroups() { return this.segmentSummary ? this.segmentSummary.segments : []; },
+    summaryGroups() { return this.segmentSummary ? this.segmentSummary.summary : []; },
+    perKmHeaders() {
+      return [
+        { title: 'KM', key: 'km' },
+        { title: 'Gain (m)', key: 'gain' },
+        { title: 'Loss (m)', key: 'loss' }
+      ];
+    },
+    rateHeaders() {
+      return [
+        { title: 'Label', key: 'label' },
+        { title: 'Avg Net Rate', key: 'avg_net_rate' },
+        { title: 'Avg Pace', key: 'avg_pace' }
+      ];
+    },
+    segmentHeaders() {
+      return [
+        { title: 'KM', key: 'km' },
+        { title: 'Net Rate', key: 'net_rate' },
+        { title: 'Pace', key: 'pace_min_per_km' }
+      ];
+    }
+  },
+  methods: {
+    submit() {
+      if (!this.file) return;
+      const formData = new FormData();
+      formData.append('gpxfile', this.file);
+      fetch('/api/upload', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          this.stats = data.stats;
+          this.segmentSummary = data.segmentSummary;
+          this.$nextTick(() => { this.initMap(); this.initChart(); });
+          this.uploaderPanel = null;
+        })
+        .catch(() => alert('Failed to parse GPX'));
+    },
+    initMap() {
+      if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
+      const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
+      const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 14,
+        center: path[0],
+        mapTypeId: 'terrain'
+      });
+      new google.maps.Polyline({ path, map, strokeColor: 'blue' });
+      if (this.stats.waypoints) {
+        this.stats.waypoints.forEach(wp => {
+          new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map, title: wp.name || '' });
+        });
+      }
+    },
+    initChart() {
+      if (!this.stats.profile || !this.stats.profile.length) return;
+      const ctx = document.getElementById('chart').getContext('2d');
+      const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
+      const elev = this.stats.profile.map(p => p[1]);
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
+        options: { responsive: true, scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } } }
+      });
+    }
+  }
+}).use(vuetify).mount('#app');
+</script>
+<% if (googleMapsApiKey) { %>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>"></script>
+<% } %>
+</body>
+</html>
