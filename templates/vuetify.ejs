@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
   <script src="https://unpkg.com/vue@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     #map { height: 400px; }
@@ -67,7 +68,13 @@
 </div>
 <script>
 const { createApp } = Vue;
-const vuetify = Vuetify.createVuetify();
+const vuetify = Vuetify.createVuetify({
+  components: {
+    ...Vuetify.components,
+    ...VuetifyLabs.components
+  },
+  directives: Vuetify.directives
+});
 createApp({
   data() {
     return {
@@ -149,7 +156,7 @@ createApp({
       }
     },
     initChart() {
-      if (!this.stats.profile || !this.stats.profile.length) return;
+      if (!this.stats.profile || !this.stats.profile.length || !window.Chart) return;
       const ctx = document.getElementById('chart').getContext('2d');
       const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
       const elev = this.stats.profile.map(p => p[1]);
