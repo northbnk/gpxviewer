@@ -4,8 +4,11 @@
   <meta charset="utf-8">
   <title>GPX Viewer - Vue</title>
   <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
+    #map { height: 400px; margin-top: 20px; }
+    #chart { height: 300px; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -21,6 +24,8 @@
         <li>Highest elevation: {{ stats.highest_elevation_m }} m</li>
         <li>Lowest elevation: {{ stats.lowest_elevation_m }} m</li>
       </ul>
+      <div id="map"></div>
+      <canvas id="chart"></canvas>
     </div>
   </div>
 <script>
@@ -37,11 +42,43 @@ createApp({
       formData.append('gpxfile', file);
       fetch('/api/upload', { method: 'POST', body: formData })
         .then(res => res.json())
-        .then(data => { this.stats = data.stats; })
+        .then(data => {
+          this.stats = data.stats;
+          this.$nextTick(() => { this.initMap(); this.initChart(); });
+        })
         .catch(() => { alert('Failed to parse GPX'); });
+    },
+    initMap() {
+      if (!this.stats || !this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
+      const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
+      const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 14,
+        center: path[0],
+        mapTypeId: 'terrain'
+      });
+      new google.maps.Polyline({ path, map, strokeColor: 'blue' });
+      if (this.stats.waypoints) {
+        this.stats.waypoints.forEach(wp => {
+          new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map, title: wp.name || '' });
+        });
+      }
+    },
+    initChart() {
+      if (!this.stats || !this.stats.profile || !this.stats.profile.length) return;
+      const ctx = document.getElementById('chart').getContext('2d');
+      const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
+      const elev = this.stats.profile.map(p => p[1]);
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
+        options: { responsive: true, scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } } }
+      });
     }
   }
 }).mount('#app');
 </script>
+<% if (googleMapsApiKey) { %>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>"></script>
+<% } %>
 </body>
 </html>

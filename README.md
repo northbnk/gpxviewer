@@ -25,7 +25,8 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
    ```
 4. Open `http://localhost:8180` in your browser. Drop a `.gpx` file onto the page
    or use the file picker at the top to upload it. The page then displays various
-   statistics and provides a button to download the JSON summary.
+   statistics and provides a button to download the JSON summary. For a basic
+   Vue.js interface use `/vue`; for a richer UI based on Vuetify use `/vuetify`.
 5. (Optional) To generate a textual analysis of the uploaded track using GPT,
    set `OPENAI_API_KEY` in the environment. A "Generate Text Report" button
    appears on the result page and will call the OpenAI API to create a short
