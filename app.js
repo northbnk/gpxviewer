@@ -62,7 +62,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/vue", (req, res) => {
-  res.render("vue");
+  const apiKey =
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLEMAPS_API_KEY ||
+    process.env.GOOGLE_MAP_API_KEY;
+  res.render("vue", { googleMapsApiKey: apiKey });
 });
 
 app.get("/vuetify", (req, res) => {
