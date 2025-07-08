@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
   <script src="https://unpkg.com/vue@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     #map { height: 400px; }
@@ -45,17 +46,17 @@
           </v-row>
 
           <v-tabs v-model="tab" class="mt-4">
-            <v-tab value="0">統計情報・予測</v-tab>
-            <v-tab value="1">地図・高低差</v-tab>
+            <v-tab :value="0">統計情報・予測</v-tab>
+            <v-tab :value="1">地図・高低差</v-tab>
           </v-tabs>
           <v-window v-model="tab">
-            <v-window-item value="0" class="mt-4">
+            <v-window-item :value="0" class="mt-4">
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact"></v-data-table>
               <v-data-table :items="predictedData" :headers="rateHeaders" density="compact"></v-data-table>
             </v-window-item>
-            <v-window-item value="1" class="mt-4">
+            <v-window-item :value="1" class="mt-4">
               <div id="map" class="mb-4"></div>
               <canvas id="chart"></canvas>
             </v-window-item>
@@ -67,7 +68,13 @@
 </div>
 <script>
 const { createApp } = Vue;
-const vuetify = Vuetify.createVuetify();
+const vuetify = Vuetify.createVuetify({
+  components: {
+    ...Vuetify.components,
+    ...VuetifyLabs.components
+  },
+  directives: Vuetify.directives
+});
 createApp({
   data() {
     return {
@@ -149,7 +156,7 @@ createApp({
       }
     },
     initChart() {
-      if (!this.stats.profile || !this.stats.profile.length) return;
+      if (!this.stats.profile || !this.stats.profile.length || !window.Chart) return;
       const ctx = document.getElementById('chart').getContext('2d');
       const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
       const elev = this.stats.profile.map(p => p[1]);
