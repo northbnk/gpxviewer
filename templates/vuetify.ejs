@@ -134,7 +134,8 @@
                 <div style="font-size: 15px; color: #666; margin-bottom: 8px;">
                   GPXファイルを選択またはドラッグ&ドロップでアップロードできます
                 </div>
-                <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
+                <v-file-input label="GPX File" accept=".gpx" v-model="file" @change="onFileChange"></v-file-input>
+                <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
                 <div v-if="isDragOver" style="color:#1976d2; font-weight:bold; margin-top:8px;">ここにGPXファイルをドロップ</div>
               </div>
             </v-expansion-panel-text>
@@ -938,6 +939,12 @@ createApp({
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         this.file = files[0];
+        this.submit();
+      }
+    },
+    onFileChange() {
+      const file = Array.isArray(this.file) ? this.file[0] : this.file;
+      if (file) {
         this.submit();
       }
     },
