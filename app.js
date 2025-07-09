@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 const { parseGpx, summarizeStats, analyzeSegments } = require("./gpxutils.js");
 
 function augmentStats(stats) {
@@ -48,6 +49,20 @@ const app = express();
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static(__dirname));
 const upload = multer();
+const PRED_DB = path.join(__dirname, "predicted_db.json");
+
+function readPredicted() {
+  try {
+    const txt = fs.readFileSync(PRED_DB, "utf8");
+    return JSON.parse(txt);
+  } catch (_) {
+    return [];
+  }
+}
+
+function writePredicted(data) {
+  fs.writeFileSync(PRED_DB, JSON.stringify(data, null, 2));
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "templates"));
@@ -80,6 +95,21 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
     res.json({ stats, segmentSummary });
   } catch (err) {
     res.status(400).json({ error: "Failed to parse" });
+  }
+});
+
+app.get("/api/predicted", (req, res) => {
+  res.json({ data: readPredicted() });
+});
+
+app.post("/api/predicted", (req, res) => {
+  const data = req.body.data;
+  if (!Array.isArray(data)) return res.status(400).json({ error: "Invalid data" });
+  try {
+    writePredicted(data);
+    res.json({ status: "ok" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save" });
   }
 });
 

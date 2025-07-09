@@ -218,6 +218,9 @@
                   <v-col cols="12" sm="auto">
                     <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
                   </v-col>
+                  <v-col cols="12" sm="auto">
+                    <v-btn color="primary" @click="savePredicted">保存</v-btn>
+                  </v-col>
                 </v-row>
               </div>
               <h2 class="mt-4">区間想定時間</h2>
@@ -326,6 +329,9 @@ createApp({
       isDragOver: false
     };
   },
+  created() {
+    this.loadPredicted();
+  },
   computed: {
     summaryStats() {
       if (!this.stats.trackpoints) return {};
@@ -387,11 +393,38 @@ createApp({
       }
     },
     predictedData: {
-      handler() { this.computePredictedTimes(); },
+      handler() {
+        this.computePredictedTimes();
+        this.savePredicted();
+      },
       deep: true
     }
   },
   methods: {
+    savePredicted() {
+      fetch('/api/predicted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: this.predictedData })
+      }).catch(() => {});
+    },
+    loadPredicted() {
+      fetch('/api/predicted')
+        .then(res => res.json())
+        .then(json => {
+          const data = json.data;
+          if (Array.isArray(data)) {
+            this.predictedData = data.map(r => ({
+              ...r,
+              avg_net_rate: r.avg_net_rate == null ? null : Number(r.avg_net_rate),
+              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace)
+            }));
+            this.addTrendInfo(this.predictedData);
+            this.computePredictedTimes();
+          }
+        })
+        .catch(() => {});
+    },
     submit() {
       const file = Array.isArray(this.file) ? this.file[0] : this.file;
       if (!file) return;
