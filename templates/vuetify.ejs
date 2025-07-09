@@ -228,7 +228,19 @@ createApp({
         .then(data => {
           this.stats = data.stats;
           this.segmentSummary = data.segmentSummary;
-          this.predictedData = JSON.parse(JSON.stringify(data.segmentSummary.summary || []));
+          if (this.segmentSummary && this.segmentSummary.summary) {
+            this.segmentSummary.summary.forEach(r => {
+              r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
+              r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
+            });
+          }
+          if (this.segmentSummary && this.segmentSummary.segments) {
+            this.segmentSummary.segments.forEach(s => {
+              s.net_rate = s.net_rate == null ? null : Number(s.net_rate);
+              s.pace_min_per_km = s.pace_min_per_km == null ? null : Number(s.pace_min_per_km);
+            });
+          }
+          this.predictedData = JSON.parse(JSON.stringify(this.segmentSummary?.summary || []));
           this.predictedData.forEach(r => {
             r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
             r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
