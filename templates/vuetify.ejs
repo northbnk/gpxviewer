@@ -243,6 +243,8 @@ createApp({
       map: null,
       chart: null,
       marker: null,
+      startMarker: null,
+      finishMarker: null,
       rangePolyline: null,
       waypoints: [],
       wpMarkers: [],
@@ -424,6 +426,8 @@ createApp({
       const mapDiv = document.getElementById('map');
       if (!mapDiv) return;
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
+      if (this.startMarker) { this.startMarker.setMap(null); this.startMarker = null; }
+      if (this.finishMarker) { this.finishMarker.setMap(null); this.finishMarker = null; }
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
       this.map = Vue.markRaw(new google.maps.Map(mapDiv, {
         zoom: 14,
@@ -436,8 +440,15 @@ createApp({
       const bounds = new google.maps.LatLngBounds();
       path.forEach(p => bounds.extend(p));
       this.map.fitBounds(bounds);
-      const poly = new google.maps.Polyline({ path, map: this.map, strokeColor: 'blue' });
+      const poly = new google.maps.Polyline({
+        path,
+        map: this.map,
+        strokeColor: 'blue',
+        icons: [{ icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW }, offset: '0', repeat: '100px' }]
+      });
       this.marker = Vue.markRaw(new google.maps.Marker({ map: this.map }));
+      this.startMarker = Vue.markRaw(new google.maps.Marker({ position: path[0], map: this.map, label: 'S' }));
+      this.finishMarker = Vue.markRaw(new google.maps.Marker({ position: path[path.length - 1], map: this.map, label: 'F' }));
       this.map.addListener('mousemove', e => {
         const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
         this.updateHighlight(idx);
