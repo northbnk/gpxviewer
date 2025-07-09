@@ -110,7 +110,7 @@
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
               <h2>キロ区間分析</h2>
-              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact">
+              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact" @click:row="onKmRowClick">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -127,6 +127,9 @@
                   {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
+              <div class="d-flex mb-4">
+                <v-btn color="primary" @click="downloadGroups">JSONダウンロード</v-btn>
+              </div>
               <h2 class="mt-4">想定ペース</h2>
               <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-2 estimated-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
@@ -158,6 +161,40 @@
 </div>
 <script>
 const { createApp } = Vue;
+let hoverLine = {
+  id: 'hoverLine',
+  afterDraw(chart) {
+    if (chart.tooltip && chart.tooltip._active && chart.tooltip._active.length) {
+      const ctx = chart.ctx;
+      const x = chart.tooltip._active[0].element.x;
+      const topY = chart.scales.y.top;
+      const bottomY = chart.scales.y.bottom;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, topY);
+      ctx.lineTo(x, bottomY);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+let rangeHighlight = {
+  id: 'rangeHighlight',
+  beforeDatasetsDraw(chart) {
+    if (!chart._selectedRange) return;
+    const { startIdx, endIdx } = chart._selectedRange;
+    const meta = chart.getDatasetMeta(0);
+    const ctx = chart.ctx;
+    const startX = meta.data[startIdx].x;
+    const endX = meta.data[endIdx].x;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,0,0,0.1)';
+    ctx.fillRect(startX, chart.scales.y.top, endX - startX, chart.scales.y.bottom - chart.scales.y.top);
+    ctx.restore();
+  }
+};
 const vuetify = Vuetify.createVuetify({
   components: window.VuetifyLabs
     ? { ...Vuetify.components, ...VuetifyLabs.components }
@@ -172,6 +209,10 @@ createApp({
       segmentSummary: null,
       predictedData: [],
       splitTimes: [],
+      map: null,
+      chart: null,
+      marker: null,
+      rangePolyline: null,
       ranges: [
         { label: '[-50% -    ]', min: -Infinity, max: -50 },
         { label: '[-40% - -50%]', min: -50, max: -40 },
@@ -298,18 +339,42 @@ createApp({
       a.click();
       URL.revokeObjectURL(url);
     },
+    downloadGroups() {
+      const blob = new Blob([JSON.stringify(this.summaryGroups, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rate_groups.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    },
     initMap() {
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
-      const map = new google.maps.Map(document.getElementById('map'), {
+      this.map = new google.maps.Map(document.getElementById('map'), {
         zoom: 14,
         center: path[0],
+        zoomControl: true,
+        scrollwheel: true,
+        gestureHandling: 'greedy',
         mapTypeId: 'terrain'
       });
-      new google.maps.Polyline({ path, map, strokeColor: 'blue' });
+      const bounds = new google.maps.LatLngBounds();
+      path.forEach(p => bounds.extend(p));
+      this.map.fitBounds(bounds);
+      const poly = new google.maps.Polyline({ path, map: this.map, strokeColor: 'blue' });
+      this.marker = new google.maps.Marker({ map: this.map });
+      this.map.addListener('mousemove', e => {
+        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+        this.updateHighlight(idx);
+      });
+      poly.addListener('mousemove', e => {
+        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+        this.updateHighlight(idx);
+      });
       if (this.stats.waypoints) {
         this.stats.waypoints.forEach(wp => {
-          new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map, title: wp.name || '' });
+          new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map: this.map, title: wp.name || '' });
         });
       }
     },
@@ -318,10 +383,21 @@ createApp({
       const ctx = document.getElementById('chart').getContext('2d');
       const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
       const elev = this.stats.profile.map(p => p[1]);
-      new Chart(ctx, {
+      Chart.register(hoverLine);
+      Chart.register(rangeHighlight);
+      this.chart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
-        options: { responsive: true, scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } } }
+        options: {
+          responsive: true,
+          interaction: { mode: 'nearest', intersect: false },
+          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } }
+        },
+        plugins: [hoverLine, rangeHighlight]
+      });
+      document.getElementById('chart').addEventListener('mousemove', evt => {
+        const els = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
+        if (els.length) this.updateHighlight(els[0].index);
       });
     },
     formatTime(sec) {
@@ -390,6 +466,57 @@ createApp({
         }
       });
       this.splitTimes.push({ distance: 'Finish', time: this.formatTime(cum) });
+    },
+    nearestIndex(lat, lng) {
+      let best = 0;
+      let bestDist = Infinity;
+      const pts = this.stats.trackpoints || [];
+      for (let i = 0; i < pts.length; i++) {
+        const dLat = pts[i][0] - lat;
+        const dLng = pts[i][1] - lng;
+        const d = dLat * dLat + dLng * dLng;
+        if (d < bestDist) { bestDist = d; best = i; }
+      }
+      return best;
+    },
+    updateHighlight(idx) {
+      if (!this.stats.trackpoints || !this.stats.trackpoints[idx]) return;
+      if (this.marker) {
+        this.marker.setPosition({ lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] });
+      }
+      if (this.chart) {
+        this.chart.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        this.chart.tooltip.setActiveElements([{ datasetIndex: 0, index: idx }]);
+        this.chart.update();
+      }
+    },
+    highlightRange(startIdx, endIdx) {
+      if (!this.chart) return;
+      this.chart._selectedRange = { startIdx, endIdx };
+      this.chart.update();
+      if (this.map) {
+        const path = [];
+        for (let i = startIdx; i <= endIdx; i++) {
+          path.push({ lat: this.stats.trackpoints[i][0], lng: this.stats.trackpoints[i][1] });
+        }
+        if (!this.rangePolyline) {
+          this.rangePolyline = new google.maps.Polyline({
+            path,
+            map: this.map,
+            strokeColor: 'red',
+            strokeOpacity: 0.8,
+            strokeWeight: 6
+          });
+        } else {
+          this.rangePolyline.setPath(path);
+          this.rangePolyline.setMap(this.map);
+        }
+      }
+    },
+    onKmRowClick(_e, row) {
+      if (row.start_idx != null && row.end_idx != null) {
+        this.highlightRange(row.start_idx, row.end_idx);
+      }
     }
   }
 }).use(vuetify).mount('#app');
