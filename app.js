@@ -140,6 +140,7 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
       id,
       uid: req.uid,
       name: req.file.originalname,
+      title: req.body.title || '',
       gpx: text,
       created: Date.now(),
     });
@@ -168,7 +169,7 @@ app.post("/api/predicted", (req, res) => {
 app.get("/api/gpx", (req, res) => {
   const list = readGpxDb()
     .filter((r) => r.uid === req.uid)
-    .map(({ id, name, created }) => ({ id, name, created }));
+    .map(({ id, name, title, created }) => ({ id, name, title, created }));
   res.json({ data: list });
 });
 
