@@ -69,13 +69,25 @@
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
               <h2>Elevation per KM</h2>
-              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact">
+                <template v-slot:item.trend="{ item }">
+                  <span v-html="item.trend"></span>
+                </template>
+              </v-data-table>
               <h2 class="mt-4">Rate Groups</h2>
-              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact">
+                <template v-slot:item.trend="{ item }">
+                  <span v-html="item.trend"></span>
+                </template>
+              </v-data-table>
               <h2 class="mt-4">Segments</h2>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact"></v-data-table>
               <h2 class="mt-4">Estimated Rate</h2>
-              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact">
+                <template v-slot:item.trend="{ item }">
+                  <span v-html="item.trend"></span>
+                </template>
+              </v-data-table>
               <h2 class="mt-4">Split Times</h2>
               <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact"></v-data-table>
             </v-window-item>
