@@ -12,6 +12,17 @@
   <style>
     #map { height: 400px; }
     #chart { height: 300px; }
+    .up1 { color: #6bc56b; }
+    .up2 { color: #2e8b57; }
+    .up3 { color: #006400; }
+    .up4 { color: #004b00; }
+    .up5 { color: #002b00; }
+    .down1 { color: #e9967a; }
+    .down2 { color: #cd5c5c; }
+    .down3 { color: #8b0000; }
+    .down4 { color: #7a0000; }
+    .down5 { color: #3f0000; }
+    .flat { color: #808080; }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -51,10 +62,16 @@
           </v-tabs>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
+              <h2>Elevation per KM</h2>
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact"></v-data-table>
+              <h2 class="mt-4">Rate Groups</h2>
               <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
+              <h2 class="mt-4">Segments</h2>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact"></v-data-table>
-              <v-data-table :items="predictedData" :headers="rateHeaders" density="compact"></v-data-table>
+              <h2 class="mt-4">Estimated Rate</h2>
+              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact"></v-data-table>
+              <h2 class="mt-4">Split Times</h2>
+              <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact"></v-data-table>
             </v-window-item>
             <v-window-item :value="1" class="mt-4">
               <div id="map" class="mb-4"></div>
@@ -82,6 +99,22 @@ createApp({
       stats: {},
       segmentSummary: null,
       predictedData: [],
+      splitTimes: [],
+      ranges: [
+        { label: '[-50% -    ]', min: -Infinity, max: -50 },
+        { label: '[-40% - -50%]', min: -50, max: -40 },
+        { label: '[-30% - -40%]', min: -40, max: -30 },
+        { label: '[-20% - -30%]', min: -30, max: -20 },
+        { label: '[-10% - -20%]', min: -20, max: -10 },
+        { label: '[ -5% - -10%]', min: -10, max: -5 },
+        { label: '[-5%  -   5%]', min: -5, max: 5 },
+        { label: '[5%  -  10%]', min: 5, max: 10 },
+        { label: '[10% -  20%]', min: 10, max: 20 },
+        { label: '[20% -  30%]', min: 20, max: 30 },
+        { label: '[30% -  40%]', min: 30, max: 40 },
+        { label: '[40% -  50%]', min: 40, max: 50 },
+        { label: '[50% -    ]', min: 50, max: Infinity }
+      ],
       uploaderPanel: 0,
       tab: 0
     };
@@ -105,14 +138,18 @@ createApp({
       return [
         { title: 'KM', key: 'km' },
         { title: 'Gain (m)', key: 'gain' },
-        { title: 'Loss (m)', key: 'loss' }
+        { title: 'Loss (m)', key: 'loss' },
+        { title: 'Actual Time', key: 'actual_time' },
+        { title: 'Estimated Time', key: 'pred_time' },
+        { title: '', key: 'trend', sortable: false }
       ];
     },
     rateHeaders() {
       return [
-        { title: 'Label', key: 'label' },
-        { title: 'Avg Net Rate', key: 'avg_net_rate' },
-        { title: 'Avg Pace', key: 'avg_pace' }
+        { title: '', key: 'trend', sortable: false },
+        { title: 'Group', key: 'label' },
+        { title: 'Avg Net Rate (%)', key: 'avg_net_rate' },
+        { title: 'Avg Pace (min/km)', key: 'avg_pace' }
       ];
     },
     segmentHeaders() {
@@ -121,6 +158,22 @@ createApp({
         { title: 'Net Rate', key: 'net_rate' },
         { title: 'Pace', key: 'pace_min_per_km' }
       ];
+    },
+    splitHeaders() {
+      return [
+        { title: 'Distance', key: 'distance' },
+        { title: 'Predicted Time', key: 'time' }
+      ];
+    }
+  },
+  watch: {
+    tab(val) {
+      if (val === 1) {
+        this.$nextTick(() => {
+          this.initMap();
+          this.initChart();
+        });
+      }
     }
   },
   methods: {
@@ -135,6 +188,10 @@ createApp({
           this.stats = data.stats;
           this.segmentSummary = data.segmentSummary;
           this.predictedData = JSON.parse(JSON.stringify(data.segmentSummary.summary || []));
+          this.addTrendInfo(this.stats.per_km_elevation);
+          if (this.segmentSummary && this.segmentSummary.summary) this.addTrendInfo(this.segmentSummary.summary);
+          this.addTrendInfo(this.predictedData);
+          this.computePredictedTimes();
           this.$nextTick(() => { this.initMap(); this.initChart(); });
           this.uploaderPanel = null;
         })
@@ -165,6 +222,73 @@ createApp({
         data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
         options: { responsive: true, scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } } }
       });
+    },
+    formatTime(sec) {
+      if (sec == null) return '-';
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.round(sec % 60);
+      return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
+    },
+    predictedTimeSeconds(dist, netRate) {
+      if (!this.predictedData || !this.predictedData.length) return null;
+      const slope = netRate;
+      const range = this.ranges.find(r => slope >= r.min && slope < r.max);
+      if (!range) return null;
+      const grp = this.predictedData.find(g => g.label === range.label);
+      if (!grp || grp.avg_pace == null) return null;
+      return (dist / 1000) * grp.avg_pace * 60;
+    },
+    addTrendInfo(arr) {
+      if (!arr) return;
+      arr.forEach(row => {
+        const diff = (row.gain != null && row.loss != null) ? (row.gain - row.loss) : row.avg_net_rate;
+        let icon, cls;
+        if (diff > 10) {
+          icon = 'trending_up';
+          if (diff > 50) cls = 'up5';
+          else if (diff > 40) cls = 'up4';
+          else if (diff > 30) cls = 'up3';
+          else if (diff > 20) cls = 'up2';
+          else cls = 'up1';
+        } else if (diff < -10) {
+          icon = 'trending_down';
+          if (diff < -50) cls = 'down5';
+          else if (diff < -40) cls = 'down4';
+          else if (diff < -30) cls = 'down3';
+          else if (diff < -20) cls = 'down2';
+          else cls = 'down1';
+        } else {
+          icon = 'trending_flat';
+          cls = 'flat';
+        }
+        row.trend = `<span class="${cls} material-symbols-outlined">${icon}</span>`;
+      });
+    },
+    computePredictedTimes() {
+      if (!this.stats.trackpoints) return;
+      const pts = this.stats.trackpoints;
+      (this.stats.per_km_elevation || []).forEach(row => {
+        if (row.start_idx != null && row.end_idx != null) {
+          const dist = pts[row.end_idx][4] - pts[row.start_idx][4];
+          const avgUp = dist > 0 ? (row.gain / dist) * 100 : 0;
+          const avgDown = dist > 0 ? (row.loss / dist) * 100 : 0;
+          const net = avgUp - avgDown;
+          row.actual_time_s = row.duration_s;
+          row.pred_time_s = this.predictedTimeSeconds(dist, net);
+          row.actual_time = this.formatTime(row.actual_time_s);
+          row.pred_time = this.formatTime(row.pred_time_s);
+        }
+      });
+      this.splitTimes = [];
+      let cum = 0;
+      (this.stats.per_km_elevation || []).forEach((row, idx) => {
+        if (row.pred_time_s != null) cum += row.pred_time_s;
+        if ((idx + 1) % 5 === 0) {
+          this.splitTimes.push({ distance: `${idx + 1} km`, time: this.formatTime(cum) });
+        }
+      });
+      this.splitTimes.push({ distance: 'Finish', time: this.formatTime(cum) });
     }
   }
 }).use(vuetify).mount('#app');
