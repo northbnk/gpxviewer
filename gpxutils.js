@@ -240,19 +240,19 @@ function analyzeSegments(stats, interval = 500) {
   }
 
   const ranges = [
-    { label: "[-50% -    ]", min: -Infinity, max: -50, segs: [] },
-    { label: "[-40% - -50%]", min: -50, max: -40, segs: [] },
-    { label: "[-30% - -40%]", min: -40, max: -30, segs: [] },
-    { label: "[-20% - -30%]", min: -30, max: -20, segs: [] },
-    { label: "[-10% - -20%]", min: -20, max: -10, segs: [] },
-    { label: "[ -5% - -10%]", min: -10, max: -5, segs: [] },
-    { label: "[-5%  -   5%]", min: -5, max: 5, segs: [] },
-    { label: "[5%  -  10%]", min: 5, max: 10, segs: [] },
-    { label: "[10% -  20%]", min: 10, max: 20, segs: [] },
-    { label: "[20% -  30%]", min: 20, max: 30, segs: [] },
-    { label: "[30% -  40%]", min: 30, max: 40, segs: [] },
-    { label: "[40% -  50%]", min: 40, max: 50, segs: [] },
-    { label: "[50% -    ]", min: 50, max: Infinity, segs: [] },
+    { label: "-50% -    ", min: -Infinity, max: -50, segs: [] },
+    { label: "-50% - -40%", min: -50, max: -40, segs: [] },
+    { label: "-40% - -30%", min: -40, max: -30, segs: [] },
+    { label: "-30% - -20%", min: -30, max: -20, segs: [] },
+    { label: "-20% - -10%", min: -20, max: -10, segs: [] },
+    { label: "-10% - -5%", min: -10, max: -5, segs: [] },
+    { label: "-5%  -   5%", min: -5, max: 5, segs: [] },
+    { label: "5%  -  10%", min: 5, max: 10, segs: [] },
+    { label: "10% -  20%", min: 10, max: 20, segs: [] },
+    { label: "20% -  30%", min: 20, max: 30, segs: [] },
+    { label: "30% -  40%", min: 30, max: 40, segs: [] },
+    { label: "40% -  50%", min: 40, max: 50, segs: [] },
+    { label: "50% -    ", min: 50, max: Infinity, segs: [] },
   ];
 
   segments.forEach((seg) => {
