@@ -834,25 +834,25 @@ createApp({
       const table = document.createElement('table');
       const thead = document.createElement('thead');
       const headRow = document.createElement('tr');
-      headRow.innerHTML = '<th class="label-cell">Name</th>';
+      headRow.innerHTML = '<th class="label-cell">区間：</th>';
       segs.forEach((seg, i) => {
         const startLabel = i === 0 ? 'Start' : `WP${i}`;
         const endLabel = i === segs.length - 1 ? 'Finish' : `WP${i+1}`;
-        headRow.innerHTML += `<th>${startLabel}-${endLabel}</th>`;
+        headRow.innerHTML += `<th class="text-right">${startLabel}-${endLabel}</th>`;
       });
       thead.appendChild(headRow);
       table.appendChild(thead);
       const tbody = document.createElement('tbody');
       const rows = [
-        { label: 'Distance', format: seg => `${(seg.dist_m/1000).toFixed(1)} km` },
-        { label: 'Elevation Gain', format: seg => `${seg.gain_m.toFixed(1)} m` },
-        { label: 'Elevation Loss', format: seg => `${seg.loss_m.toFixed(1)} m` },
-        { label: 'Average Up', format: seg => `${seg.avg_up.toFixed(2)} %` },
-        { label: 'Average Down', format: seg => `${seg.avg_down.toFixed(2)} %` }
+        { label: '距離：', format: seg => `${(seg.dist_m/1000).toFixed(1)} km` },
+        { label: '上昇(m)：', format: seg => `${seg.gain_m.toFixed(1)} m` },
+        { label: '降下(m)：', format: seg => `${seg.loss_m.toFixed(1)} m` },
+        { label: '平均上昇率：', format: seg => `${seg.avg_up.toFixed(2)} %` },
+        { label: '平均下降率：', format: seg => `${seg.avg_down.toFixed(2)} %` }
       ];
       rows.forEach(info => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td class="label-cell">${info.label}</td>` + segs.map(seg => `<td>${info.format(seg)}</td>`).join('');
+        row.innerHTML = `<td class="label-cell">${info.label}</td>` + segs.map(seg => `<td class="text-right">${info.format(seg)}</td>`).join('');
         tbody.appendChild(row);
       });
       table.appendChild(tbody);

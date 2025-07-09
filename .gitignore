@@ -1,2 +1,4 @@
 node_modules/
 .env
+gpx_db.json
+predicted_db.json
