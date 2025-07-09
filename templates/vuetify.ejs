@@ -142,8 +142,17 @@
           <v-expansion-panel>
             <v-expansion-panel-title expand-icon="mdi-chevron-down">保存・保存済みから開く</v-expansion-panel-title>
             <v-expansion-panel-text>
-              <v-text-field v-model="title" label="タイトル" class="mb-2"></v-text-field>
-              <v-btn color="primary" class="mb-4" @click="submit">保存</v-btn>
+              <h3 class="mb-2">保存欄</h3>
+              <v-row class="align-center mb-4" dense>
+                <v-col>
+                  <v-text-field v-model="title" label="タイトル"></v-text-field>
+                </v-col>
+                <v-col cols="auto">
+                  <v-btn color="primary" @click="submit">保存</v-btn>
+                </v-col>
+              </v-row>
+              <v-divider class="my-2"></v-divider>
+              <h3 class="mt-2 mb-1">保存済みGPXファイル一覧</h3>
               <v-list density="compact">
                 <v-list-item v-for="g in savedGpxList" :key="g.id">
                   <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
