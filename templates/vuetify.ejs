@@ -20,7 +20,8 @@
   <v-app>
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>
-        <v-icon class="mr-2">mdi-map</v-icon>GPX Analysis
+        <img src="/favicon.ico" alt="favicon" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;">
+        トレイルランナー向けGPX分析ツール
       </v-toolbar-title>
     </v-app-bar>
     <v-main>
@@ -35,6 +36,11 @@
           </v-expansion-panel>
         </v-expansion-panels>
 
+        <div v-if="!stats.trackpoints || !stats.trackpoints.length" class="mt-6">
+          <v-alert type="info" border="start" color="primary" variant="tonal">
+            GPXファイルをアップロードしてください。
+          </v-alert>
+        </div>
         <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
           <v-row>
             <v-col cols="12" sm="6" v-for="(value, key) in summaryStats" :key="key">
@@ -69,10 +75,9 @@
 <script>
 const { createApp } = Vue;
 const vuetify = Vuetify.createVuetify({
-  components: {
-    ...Vuetify.components,
-    ...VuetifyLabs.components
-  },
+  components: window.VuetifyLabs
+    ? { ...Vuetify.components, ...VuetifyLabs.components }
+    : Vuetify.components,
   directives: Vuetify.directives
 });
 createApp({
@@ -90,12 +95,12 @@ createApp({
     summaryStats() {
       if (!this.stats.trackpoints) return {};
       return {
-        'Total trackpoints': this.stats.trackpoints.length,
-        'Total distance': (this.stats.distance_m/1000).toFixed(2) + ' km',
-        'Highest elevation': this.stats.highest_elevation_m.toFixed(1) + ' m',
-        'Lowest elevation': this.stats.lowest_elevation_m.toFixed(1) + ' m',
-        'Total gain': this.stats.total_gain_m.toFixed(1) + ' m',
-        'Total loss': this.stats.total_loss_m.toFixed(1) + ' m'
+        'トラックポイント数': this.stats.trackpoints.length,
+        '総距離（km）': (this.stats.distance_m/1000).toFixed(2) + ' km',
+        '最高標高': this.stats.highest_elevation_m.toFixed(1) + ' m',
+        '最低標高': this.stats.lowest_elevation_m.toFixed(1) + ' m',
+        '総獲得標高': this.stats.total_gain_m.toFixed(1) + ' m',
+        '総標高損失': this.stats.total_loss_m.toFixed(1) + ' m'
       };
     },
     perKmData() { return this.stats.per_km_elevation || []; },
