@@ -64,6 +64,14 @@
       background-color: #fffbe6;
       max-width: 140px;
     }
+    #waypointStats { overflow-x:auto; }
+    #waypointStats table { width:100%; table-layout:fixed; border-collapse:collapse; }
+    #waypointStats th { padding:2px 4px; text-align:right; }
+    #waypointStats th.label-cell { text-align:left; font-weight:bold; width:120px; min-width:80px; }
+    #waypointStats td { padding:2px 4px; text-align:right; }
+    #waypointStats td.label-cell { text-align:left; font-weight:bold; }
+    #waypointStats th:not(.label-cell), #waypointStats td:not(.label-cell) { text-align:center; }
+    #waypointStats th:not(.label-cell), #waypointStats td:not(.label-cell) { width:auto; }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -80,10 +88,10 @@
       <v-container class="mt-4">
         <v-expansion-panels v-model="uploaderPanel">
           <v-expansion-panel>
-            <v-expansion-panel-title expand-icon="mdi-chevron-down">Upload GPX</v-expansion-panel-title>
+            <v-expansion-panel-title expand-icon="mdi-chevron-down">GPXファイルアップロード</v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
-              <v-btn color="primary" class="mt-2" @click="submit">Upload</v-btn>
+              <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -128,7 +136,7 @@
                 </template>
               </v-data-table>
               <div class="d-flex mb-4">
-                <v-btn color="primary" @click="downloadGroups">JSONダウンロード</v-btn>
+                <v-btn color="primary" @click="downloadGroups">自身のペース分析ファイルをダウンロード</v-btn>
               </div>
               <h2 class="mt-4">想定ペース</h2>
               <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-2 estimated-table" density="compact" hide-default-footer items-per-page="13">
@@ -143,7 +151,7 @@
                 </template>
               </v-data-table>
               <div class="d-flex mb-4">
-                <v-btn class="mr-2" color="primary" @click="downloadPredicted">JSONダウンロード</v-btn>
+                <v-btn class="mr-2" color="primary" @click="downloadPredicted">自身のペース分析ファイルをダウンロード</v-btn>
                 <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
               </div>
               <h2 class="mt-4">区間想定時間</h2>
@@ -153,7 +161,7 @@
               <div id="map" class="mb-4"></div>
               <canvas id="chart"></canvas>
               <div class="mt-4">
-                <v-btn size="small" class="mb-2" @click="clearWaypoints">Clear Waypoints</v-btn>
+                <v-btn size="small" class="mb-2" @click="clearWaypoints">クリア</v-btn>
                 <div id="waypointStats"></div>
               </div>
             </v-window-item>
