@@ -156,13 +156,25 @@
             </v-col>
           </v-row>
 
-          <v-tabs v-model="tab" class="mt-4 elevation-1" bg-color="grey-lighten-4" color="primary">
-            <v-tab :value="0">統計情報・予測</v-tab>
-            <v-tab :value="1">地図・高低差</v-tab>
+          <v-tabs v-model="tab" class="mt-4 elevation-1" bg-color="grey-lighten-4" color="primary" ref="tabsTop">
+            <v-tab :value="0">地図・高低差</v-tab>
+            <v-tab :value="1">統計情報・予測</v-tab>
             <v-tab :value="2">AI分析</v-tab>
           </v-tabs>
+          <div class="mt-2 text-right">
+            <span class="material-symbols-outlined" style="vertical-align:middle">info</span>
+            <a href="#" @click.prevent="tab = 0" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
+          </div>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
+              <div id="map" class="mb-4"></div>
+              <canvas id="chart"></canvas>
+              <div class="mt-4">
+                <v-btn color="primary" size="small" class="mb-2" @click="clearWaypoints">クリア</v-btn>
+                <div id="waypointStats"></div>
+              </div>
+            </v-window-item>
+            <v-window-item :value="1" class="mt-4">
               <h2>キロ区間分析</h2>
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact" @click:row="onKmRowClick">
                 <template v-slot:item.trend="{ item }">
@@ -209,14 +221,6 @@
               </div>
               <h2 class="mt-4">区間想定時間</h2>
               <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></v-data-table>
-            </v-window-item>
-            <v-window-item :value="1" class="mt-4">
-              <div id="map" class="mb-4"></div>
-              <canvas id="chart"></canvas>
-              <div class="mt-4">
-                <v-btn color="primary" size="small" class="mb-2" @click="clearWaypoints">クリア</v-btn>
-                <div id="waypointStats"></div>
-              </div>
             </v-window-item>
             <v-window-item :value="2" class="mt-4">
               <div>
@@ -370,7 +374,8 @@ createApp({
   },
   watch: {
     tab(val) {
-      if (val === 1) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (val === 0) {
         this.$nextTick(() => {
           this.initMap();
           this.initChart();
