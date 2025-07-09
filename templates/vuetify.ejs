@@ -140,6 +140,23 @@
               </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
+          <v-expansion-panel>
+            <v-expansion-panel-title expand-icon="mdi-chevron-down">保存済みGPX</v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <v-list density="compact">
+                <v-list-item v-for="g in savedGpxList" :key="g.id">
+                  <v-list-item-title>{{ g.name }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
+                  <template #append>
+                    <v-btn size="small" @click="loadSavedGpx(g.id)">読み込む</v-btn>
+                  </template>
+                </v-list-item>
+                <v-list-item v-if="!savedGpxList.length">
+                  <v-list-item-title>保存されたデータはありません</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
         </v-expansion-panels>
 
         <div v-if="!stats.trackpoints || !stats.trackpoints.length" class="mt-6">
@@ -299,6 +316,7 @@ createApp({
       stats: {},
       segmentSummary: null,
       predictedData: [],
+      savedGpxList: [],
       splitTimes: [],
       map: null,
       chart: null,
@@ -331,6 +349,7 @@ createApp({
   },
   created() {
     this.loadPredicted();
+    this.loadSavedList();
   },
   computed: {
     summaryStats() {
@@ -425,6 +444,56 @@ createApp({
         })
         .catch(() => {});
     },
+    loadSavedList() {
+      fetch('/api/gpx')
+        .then(res => res.json())
+        .then(json => { this.savedGpxList = Array.isArray(json.data) ? json.data : []; })
+        .catch(() => { this.savedGpxList = []; });
+    },
+    loadSavedGpx(id) {
+      fetch(`/api/gpx/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          this.applyStats(data);
+          this.uploaderPanel = null;
+        })
+        .catch(() => alert('Failed to load GPX'));
+    },
+    applyStats(data) {
+      this.stats = data.stats;
+      this.segmentSummary = data.segmentSummary;
+      if (this.segmentSummary && this.segmentSummary.summary) {
+        this.segmentSummary.summary.forEach(r => {
+          r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
+          r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
+        });
+      }
+      if (this.segmentSummary && this.segmentSummary.segments) {
+        this.segmentSummary.segments.forEach(s => {
+          s.net_rate = s.net_rate == null ? null : Number(s.net_rate);
+          s.pace_min_per_km = s.pace_min_per_km == null ? null : Number(s.pace_min_per_km);
+        });
+      }
+      this.predictedData = JSON.parse(JSON.stringify(this.segmentSummary?.summary || []));
+      this.predictedData.forEach(r => {
+        r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
+        r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
+      });
+      this.addTrendInfo(this.stats.per_km_elevation);
+      if (this.segmentSummary && this.segmentSummary.summary) this.addTrendInfo(this.segmentSummary.summary);
+      this.addTrendInfo(this.predictedData);
+      this.computePredictedTimes();
+      this.waypoints = [];
+      this.wpMarkers.forEach(m => m.setMap(null));
+      this.wpMarkers = [];
+      this.$nextTick(() => {
+        this.initMap();
+        this.initChart();
+        this.loadPredefinedWaypoints();
+        this.updateSegments();
+        this.updateWaypointDataset();
+      });
+    },
     submit() {
       const file = Array.isArray(this.file) ? this.file[0] : this.file;
       if (!file) return;
@@ -433,40 +502,9 @@ createApp({
       fetch('/api/upload', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-          this.stats = data.stats;
-          this.segmentSummary = data.segmentSummary;
-          if (this.segmentSummary && this.segmentSummary.summary) {
-            this.segmentSummary.summary.forEach(r => {
-              r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
-              r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
-            });
-          }
-          if (this.segmentSummary && this.segmentSummary.segments) {
-            this.segmentSummary.segments.forEach(s => {
-              s.net_rate = s.net_rate == null ? null : Number(s.net_rate);
-              s.pace_min_per_km = s.pace_min_per_km == null ? null : Number(s.pace_min_per_km);
-            });
-          }
-          this.predictedData = JSON.parse(JSON.stringify(this.segmentSummary?.summary || []));
-          this.predictedData.forEach(r => {
-            r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
-            r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
-          });
-          this.addTrendInfo(this.stats.per_km_elevation);
-          if (this.segmentSummary && this.segmentSummary.summary) this.addTrendInfo(this.segmentSummary.summary);
-          this.addTrendInfo(this.predictedData);
-          this.computePredictedTimes();
-          this.waypoints = [];
-          this.wpMarkers.forEach(m => m.setMap(null));
-          this.wpMarkers = [];
-          this.$nextTick(() => {
-            this.initMap();
-            this.initChart();
-            this.loadPredefinedWaypoints();
-            this.updateSegments();
-            this.updateWaypointDataset();
-          });
+          this.applyStats(data);
           this.uploaderPanel = null;
+          this.loadSavedList();
         })
         .catch(() => alert('Failed to parse GPX'));
     },
