@@ -28,6 +28,12 @@
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
+    .perkm-table .v-data-table-footer__items-per-page,
+    .perkm-table .v-data-table-footer__info,
+    .split-table .v-data-table-footer__items-per-page,
+    .split-table .v-data-table-footer__info {
+      display: none;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -73,14 +79,14 @@
           </v-tabs>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
-              <h2>Elevation per KM</h2>
-              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact">
+              <h2>キロ区間分析</h2>
+              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
               </v-data-table>
-              <h2 class="mt-4">Rate Groups</h2>
-              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact">
+              <h2 class="mt-4">勾配グループ分析</h2>
+              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -91,17 +97,8 @@
                   {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
-              <h2 class="mt-4">Segments</h2>
-              <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact">
-                <template v-slot:item.net_rate="{ item }">
-                  {{ item.raw.net_rate == null ? '-' : Number(item.raw.net_rate).toFixed(2) }}
-                </template>
-                <template v-slot:item.pace_min_per_km="{ item }">
-                  {{ item.raw.pace_min_per_km == null ? '-' : Number(item.raw.pace_min_per_km).toFixed(2) }}
-                </template>
-              </v-data-table>
-              <h2 class="mt-4">Estimated Rate</h2>
-              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact">
+              <h2 class="mt-4">想定ペース</h2>
+              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -113,7 +110,7 @@
                 </template>
               </v-data-table>
               <h2 class="mt-4">Split Times</h2>
-              <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact"></v-data-table>
+              <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></v-data-table>
             </v-window-item>
             <v-window-item :value="1" class="mt-4">
               <div id="map" class="mb-4"></div>
