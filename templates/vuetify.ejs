@@ -464,13 +464,43 @@ createApp({
       const elev = this.stats.profile.map(p => p[1]);
       Chart.register(hoverLine);
       Chart.register(rangeHighlight);
+      const self = this;
       this.chart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
         options: {
           responsive: true,
           interaction: { mode: 'nearest', intersect: false },
-          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } }
+          scales: { x: { title: { display: true, text: 'Distance (km)' } }, y: { title: { display: true, text: 'Elevation (m)' } } },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: ctx => {
+                  if (!ctx.length) return '';
+                  const idx = ctx[0].dataIndex;
+                  const distKm = (self.stats.trackpoints[idx][4] / 1000).toFixed(2);
+                  return `Distance: ${distKm} km`;
+                },
+                label: ctx => {
+                  const idx = ctx.dataIndex;
+                  const ele = self.stats.trackpoints[idx][2];
+                  const lines = [`Elevation: ${ele != null ? ele.toFixed(1) : 'N/A'} m`];
+                  const prev = self.lastWaypointIndex(idx);
+                  if (prev < idx) {
+                    const stats = self.computeStats(prev, idx);
+                    if (stats) {
+                      lines.push(`Gain: ${stats.gain_m.toFixed(1)} m`);
+                      lines.push(`Loss: ${stats.loss_m.toFixed(1)} m`);
+                      const dist = stats.dist_m;
+                      const inc = dist > 0 ? ((self.stats.trackpoints[idx][2] - self.stats.trackpoints[prev][2]) / dist * 100).toFixed(2) : '0.00';
+                      lines.push(`Inclination: ${inc} %`);
+                    }
+                  }
+                  return lines;
+                }
+              }
+            }
+          }
         },
         plugins: [hoverLine, rangeHighlight]
       });
@@ -498,6 +528,18 @@ createApp({
       const grp = this.predictedData.find(g => g.label === range.label);
       if (!grp || grp.avg_pace == null) return null;
       return (dist / 1000) * grp.avg_pace * 60;
+    },
+    predictedTime(dist, netRate) {
+      const sec = this.predictedTimeSeconds(dist, netRate);
+      return this.formatTime(sec);
+    },
+    lastWaypointIndex(idx) {
+      let prev = 0;
+      for (let i = 0; i < this.waypoints.length; i++) {
+        if (this.waypoints[i] >= idx) break;
+        prev = this.waypoints[i];
+      }
+      return prev;
     },
     addTrendInfo(arr) {
       if (!arr) return;
