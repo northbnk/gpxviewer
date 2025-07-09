@@ -27,14 +27,14 @@ function extractTrackpoints(text) {
     let ele = null;
     const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(content);
     if (eleMatch) {
-      ele = parseFloat(eleMatch[1]);
+      ele = parseFloat(eleMatch[1].trim());
       if (ele > highest) highest = ele;
       if (ele < lowest) lowest = ele;
     }
     let time = null;
     const timeMatch = /<time>([^<]+)<\/time>/i.exec(content);
     if (timeMatch) {
-      const t = Date.parse(timeMatch[1]);
+      const t = Date.parse(timeMatch[1].trim());
       if (!Number.isNaN(t)) time = t;
     }
     trackpoints.push([
