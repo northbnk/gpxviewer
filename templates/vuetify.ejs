@@ -134,19 +134,20 @@
                 <div style="font-size: 15px; color: #666; margin-bottom: 8px;">
                   GPXファイルを選択またはドラッグ&ドロップでアップロードできます
                 </div>
-                <v-file-input label="GPX File" accept=".gpx" v-model="file" @change="submit"></v-file-input>
-                <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
+                <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
                 <div v-if="isDragOver" style="color:#1976d2; font-weight:bold; margin-top:8px;">ここにGPXファイルをドロップ</div>
               </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
           <v-expansion-panel>
-            <v-expansion-panel-title expand-icon="mdi-chevron-down">保存済みGPX</v-expansion-panel-title>
+            <v-expansion-panel-title expand-icon="mdi-chevron-down">保存・保存済みから開く</v-expansion-panel-title>
             <v-expansion-panel-text>
+              <v-text-field v-model="title" label="タイトル" class="mb-2"></v-text-field>
+              <v-btn color="primary" class="mb-4" @click="submit">保存</v-btn>
               <v-list density="compact">
                 <v-list-item v-for="g in savedGpxList" :key="g.id">
-                  <v-list-item-title>{{ g.name }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
+                  <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ g.name }} - {{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
                   <template #append>
                     <v-btn size="small" @click="loadSavedGpx(g.id)">読み込む</v-btn>
                   </template>
@@ -344,7 +345,8 @@ createApp({
       uploaderPanel: 0,
       tab: 0,
       analysisText: '',
-      isDragOver: false
+      isDragOver: false,
+      title: ''
     };
   },
   created() {
@@ -499,12 +501,15 @@ createApp({
       if (!file) return;
       const formData = new FormData();
       formData.append('gpxfile', file);
+      formData.append('title', this.title);
       fetch('/api/upload', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           this.applyStats(data);
           this.uploaderPanel = null;
           this.loadSavedList();
+          this.title = '';
+          this.file = null;
         })
         .catch(() => alert('Failed to parse GPX'));
     },
