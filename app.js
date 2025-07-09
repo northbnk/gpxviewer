@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
 const { parseGpx, summarizeStats, analyzeSegments } = require("./gpxutils.js");
 
 function augmentStats(stats) {
@@ -48,6 +50,60 @@ const app = express();
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static(__dirname));
 const upload = multer();
+const PRED_DB = path.join(__dirname, "predicted_db.json");
+const GPX_DB = path.join(__dirname, "gpx_db.json");
+
+function readGpxDb() {
+  try {
+    return JSON.parse(fs.readFileSync(GPX_DB, "utf8"));
+  } catch (_) {
+    return [];
+  }
+}
+
+function writeGpxDb(data) {
+  fs.writeFileSync(GPX_DB, JSON.stringify(data, null, 2));
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || "";
+  const out = {};
+  header.split(";").forEach((p) => {
+    const idx = p.indexOf("=");
+    if (idx > -1) {
+      const k = p.slice(0, idx).trim();
+      const v = p.slice(idx + 1).trim();
+      out[k] = decodeURIComponent(v);
+    }
+  });
+  return out;
+}
+
+function ensureUid(req, res, next) {
+  const cookies = parseCookies(req);
+  let uid = cookies.uid;
+  if (!uid) {
+    uid = crypto.randomUUID();
+    res.setHeader("Set-Cookie", `uid=${uid}; Path=/; HttpOnly`);
+  }
+  req.uid = uid;
+  next();
+}
+
+app.use(ensureUid);
+
+function readPredicted() {
+  try {
+    const txt = fs.readFileSync(PRED_DB, "utf8");
+    return JSON.parse(txt);
+  } catch (_) {
+    return [];
+  }
+}
+
+function writePredicted(data) {
+  fs.writeFileSync(PRED_DB, JSON.stringify(data, null, 2));
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "templates"));
@@ -75,11 +131,57 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
     return res.status(400).json({ error: "No file" });
   }
   try {
-    const stats = parseGpx(req.file.buffer.toString());
+    const text = req.file.buffer.toString();
+    const stats = parseGpx(text);
+    const segmentSummary = analyzeSegments(stats);
+    const all = readGpxDb();
+    const id = crypto.randomUUID();
+    all.push({
+      id,
+      uid: req.uid,
+      name: req.file.originalname,
+      gpx: text,
+      created: Date.now(),
+    });
+    writeGpxDb(all);
+    res.json({ id, stats, segmentSummary });
+  } catch (err) {
+    res.status(400).json({ error: "Failed to parse" });
+  }
+});
+
+app.get("/api/predicted", (req, res) => {
+  res.json({ data: readPredicted() });
+});
+
+app.post("/api/predicted", (req, res) => {
+  const data = req.body.data;
+  if (!Array.isArray(data)) return res.status(400).json({ error: "Invalid data" });
+  try {
+    writePredicted(data);
+    res.json({ status: "ok" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save" });
+  }
+});
+
+app.get("/api/gpx", (req, res) => {
+  const list = readGpxDb()
+    .filter((r) => r.uid === req.uid)
+    .map(({ id, name, created }) => ({ id, name, created }));
+  res.json({ data: list });
+});
+
+app.get("/api/gpx/:id", (req, res) => {
+  const id = req.params.id;
+  const entry = readGpxDb().find((r) => r.id === id && r.uid === req.uid);
+  if (!entry) return res.status(404).json({ error: "Not found" });
+  try {
+    const stats = parseGpx(entry.gpx);
     const segmentSummary = analyzeSegments(stats);
     res.json({ stats, segmentSummary });
   } catch (err) {
-    res.status(400).json({ error: "Failed to parse" });
+    res.status(500).json({ error: "Failed to parse" });
   }
 });
 
