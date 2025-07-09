@@ -8,7 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -112,7 +112,7 @@
   <v-app>
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>
-        <img src="/favicon.ico" alt="favicon" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;">
+        <img src="/logo.png" style="width:50px;height:50px;vertical-align:middle;margin-right:8px;">
         YamaMetri - トレイルランナー向けGPX分析ツール
       </v-toolbar-title>
     </v-app-bar>
@@ -271,7 +271,18 @@ const vuetify = Vuetify.createVuetify({
   components: window.VuetifyLabs
     ? { ...Vuetify.components, ...VuetifyLabs.components }
     : Vuetify.components,
-  directives: Vuetify.directives
+  directives: Vuetify.directives,
+  theme: {
+    defaultTheme: 'myTheme',
+    themes: {
+      myTheme: {
+        dark: false,
+        colors: {
+          primary: '#5c6e82', // 青っぽいグレー
+        }
+      }
+    }
+  }
 });
 createApp({
   data() {
@@ -661,7 +672,7 @@ createApp({
       this.splitTimes = [];
       let cum = 0;
       (this.stats.per_km_elevation || []).forEach((row, idx) => {
-        if (row.pred_time_s != null) cum += row.pred_time_s;
+        if row.pred_time_s != null) cum += row.pred_time_s;
         if ((idx + 1) % 5 === 0) {
           this.splitTimes.push({ distance: `${idx + 1} km`, time: this.formatTime(cum) });
         }
