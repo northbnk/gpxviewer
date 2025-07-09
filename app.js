@@ -57,11 +57,7 @@ app.get("/", (req, res) => {
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.GOOGLEMAPS_API_KEY ||
     process.env.GOOGLE_MAP_API_KEY;
-  res.render("result", {
-    stats: {},
-    googleMapsApiKey: apiKey,
-    segmentSummary: {},
-  });
+  res.render("vuetify", { googleMapsApiKey: apiKey });
 });
 
 app.get("/vue", (req, res) => {
@@ -72,30 +68,7 @@ app.get("/vue", (req, res) => {
   res.render("vue", { googleMapsApiKey: apiKey });
 });
 
-app.get("/vuetify", (req, res) => {
-  const apiKey =
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLEMAPS_API_KEY ||
-    process.env.GOOGLE_MAP_API_KEY;
-  res.render("vuetify", { googleMapsApiKey: apiKey });
-});
 
-app.post("/upload", upload.single("gpxfile"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded");
-  }
-  try {
-    const stats = parseGpx(req.file.buffer.toString());
-    const segmentSummary = analyzeSegments(stats);
-    const apiKey =
-      process.env.GOOGLE_MAPS_API_KEY ||
-      process.env.GOOGLEMAPS_API_KEY ||
-      process.env.GOOGLE_MAP_API_KEY;
-    res.render("result", { stats, googleMapsApiKey: apiKey, segmentSummary });
-  } catch (err) {
-    res.status(400).send("Failed to parse GPX");
-  }
-});
 
 app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
   if (!req.file) {
