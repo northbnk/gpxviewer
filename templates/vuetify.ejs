@@ -73,6 +73,15 @@
     #waypointStats td.label-cell { text-align:left; font-weight:bold; }
     #waypointStats th:not(.label-cell), #waypointStats td:not(.label-cell) { text-align:center; }
     #waypointStats th:not(.label-cell), #waypointStats td:not(.label-cell) { width:auto; }
+    #analysisText {
+      max-width: 650px;
+      margin: 32px auto 0 auto;
+      border: 2px solid #e0e0e0;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.08);
+      background: #fff;
+      padding: 24px 28px;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -154,8 +163,7 @@
               </v-data-table>
               <input type="file" ref="predFileInput" accept=".json" style="display:none" @change="onPredFileChange">
               <div class="d-flex mb-4">
-                <v-btn class="mr-2" color="primary" @click="downloadPredicted">自身のペース分析ファイルをダウンロード</v-btn>
-                <v-btn class="mr-2" color="primary" @click="triggerPredUpload">アップロード</v-btn>
+                <v-btn class="mr-2" color="primary" @click="triggerPredUpload">自身のペース分析ファイルをアップロード</v-btn>
                 <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
               </div>
               <h2 class="mt-4">区間想定時間</h2>
@@ -172,7 +180,7 @@
             <v-window-item :value="2" class="mt-4">
               <div>
                 <v-btn color="primary" @click="generateAnalysis">レポートを生成する（あまりやりすぎると主にお金がかかるので控えめにお願いします！）</v-btn>
-                <div class="mt-4" v-html="analysisText"></div>
+                <div v-if="analysisText" id="analysisText" class="mt-4 rounded-xl" v-html="analysisText"></div>
               </div>
             </v-window-item>
           </v-window>
