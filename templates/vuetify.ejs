@@ -566,7 +566,19 @@ createApp({
     addTrendInfo(arr) {
       if (!arr) return;
       arr.forEach(row => {
-        const diff = (row.gain != null && row.loss != null) ? (row.gain - row.loss) : row.avg_net_rate;
+        let diff;
+        if (row.gain != null && row.loss != null) {
+          diff = row.gain - row.loss;
+        } else if (row.avg_net_rate != null) {
+          diff = row.avg_net_rate;
+        } else {
+          const r = this.ranges.find(v => v.label === row.label);
+          if (r) {
+            if (r.max <= -5) diff = -11;
+            else if (r.min >= 5) diff = 11;
+            else diff = 0;
+          }
+        }
         let icon, cls;
         if (diff > 10) {
           icon = 'trending_up';
