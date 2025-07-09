@@ -60,6 +60,10 @@
     .v-data-table tbody td:last-child {
       border-right: none;
     }
+    .editable-input {
+      background-color: #fffbe6;
+      max-width: 80px;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -124,7 +128,7 @@
                 </template>
               </v-data-table>
               <h2 class="mt-4">想定ペース</h2>
-              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4 estimated-table" density="compact" hide-default-footer items-per-page="13">
+              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-2 estimated-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -132,9 +136,13 @@
                   {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
+                  <v-text-field v-model.number="item.raw.avg_pace" type="number" density="compact" hide-details class="editable-input" @change="computePredictedTimes"></v-text-field>
                 </template>
               </v-data-table>
+              <div class="d-flex mb-4">
+                <v-btn class="mr-2" color="primary" @click="downloadPredicted">JSONダウンロード</v-btn>
+                <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
+              </div>
               <h2 class="mt-4">区間想定時間</h2>
               <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></v-data-table>
             </v-window-item>
@@ -238,6 +246,10 @@ createApp({
           this.initChart();
         });
       }
+    },
+    predictedData: {
+      handler() { this.computePredictedTimes(); },
+      deep: true
     }
   },
   methods: {
@@ -276,6 +288,15 @@ createApp({
           this.uploaderPanel = null;
         })
         .catch(() => alert('Failed to parse GPX'));
+    },
+    downloadPredicted() {
+      const blob = new Blob([JSON.stringify(this.predictedData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rate_groups.json';
+      a.click();
+      URL.revokeObjectURL(url);
     },
     initMap() {
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
