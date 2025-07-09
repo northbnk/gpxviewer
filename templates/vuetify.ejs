@@ -672,7 +672,7 @@ createApp({
       this.splitTimes = [];
       let cum = 0;
       (this.stats.per_km_elevation || []).forEach((row, idx) => {
-        if row.pred_time_s != null) cum += row.pred_time_s;
+        if (row.pred_time_s != null) cum += row.pred_time_s;
         if ((idx + 1) % 5 === 0) {
           this.splitTimes.push({ distance: `${idx + 1} km`, time: this.formatTime(cum) });
         }
