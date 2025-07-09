@@ -82,6 +82,27 @@
       background: #fff;
       padding: 24px 28px;
     }
+    .drop-area {
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px dashed #90caf9;
+      transition: background 0.2s;
+      min-height: 80px;
+      margin-bottom: 8px;
+    }
+    .drop-area.dragover {
+      background: rgba(144, 202, 249, 0.2);
+    }
+    .drop-panel {
+      padding: 8px;
+      border-radius: 16px;
+      border: 2px dashed #bbb;
+      transition: border-color 0.2s;
+    }
+    .drop-panel.drag-over {
+      border-color: #1976d2 !important;
+      background: #e3f2fd;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -100,8 +121,21 @@
           <v-expansion-panel>
             <v-expansion-panel-title expand-icon="mdi-chevron-down">GPXファイルアップロード</v-expansion-panel-title>
             <v-expansion-panel-text>
-              <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
-              <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
+              <div
+                class="drop-panel"
+                :class="{ 'drag-over': isDragOver }"
+                @dragover.prevent="onDragOver"
+                @dragleave.prevent="onDragLeave"
+                @drop.prevent="onDrop"
+                style="padding: 8px; border-radius: 16px; border: 2px dashed #bbb; transition: border-color 0.2s;"
+              >
+                <div style="font-size: 15px; color: #666; margin-bottom: 8px;">
+                  GPXファイルを選択またはドラッグ&ドロップでアップロードできます
+                </div>
+                <v-file-input label="GPX File" accept=".gpx" v-model="file" @change="submit"></v-file-input>
+                <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
+                <div v-if="isDragOver" style="color:#1976d2; font-weight:bold; margin-top:8px;">ここにGPXファイルをドロップ</div>
+              </div>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -265,7 +299,8 @@ createApp({
       ],
       uploaderPanel: 0,
       tab: 0,
-      analysisText: ''
+      analysisText: '',
+      isDragOver: false
     };
   },
   computed: {
@@ -782,7 +817,22 @@ createApp({
       if (row.start_idx != null && row.end_idx != null) {
         this.highlightRange(row.start_idx, row.end_idx);
       }
-    }
+    },
+    onDragOver() {
+      this.isDragOver = true;
+    },
+    onDragLeave() {
+      this.isDragOver = false;
+    },
+    onDrop(e) {
+      this.isDragOver = false;
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        this.file = files[0];
+        this.submit();
+      }
+    },
+    // ...existing code...
   }
 }).use(vuetify).mount('#app');
 </script>
