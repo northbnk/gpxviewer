@@ -71,7 +71,7 @@ const { createApp } = Vue;
 const vuetify = Vuetify.createVuetify({
   components: {
     ...Vuetify.components,
-    ...VuetifyLabs.components
+    ...(typeof VuetifyLabs !== 'undefined' ? VuetifyLabs.components : {})
   },
   directives: Vuetify.directives
 });
