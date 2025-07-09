@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     #map { height: 400px; }
     #chart { height: 300px; }
@@ -114,6 +115,7 @@
           <v-tabs v-model="tab" class="mt-4 elevation-1" bg-color="grey-lighten-4" color="primary">
             <v-tab :value="0">統計情報・予測</v-tab>
             <v-tab :value="1">地図・高低差</v-tab>
+            <v-tab :value="2">AI分析</v-tab>
           </v-tabs>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
@@ -163,6 +165,12 @@
               <div class="mt-4">
                 <v-btn size="small" class="mb-2" @click="clearWaypoints">クリア</v-btn>
                 <div id="waypointStats"></div>
+              </div>
+            </v-window-item>
+            <v-window-item :value="2" class="mt-4">
+              <div>
+                <v-btn color="primary" @click="generateAnalysis">Generate Text Report</v-btn>
+                <div class="mt-4" v-html="analysisText"></div>
               </div>
             </v-window-item>
           </v-window>
@@ -243,7 +251,8 @@ createApp({
         { label: '[50% -    ]', min: 50, max: Infinity }
       ],
       uploaderPanel: 0,
-      tab: 0
+      tab: 0,
+      analysisText: ''
     };
   },
   computed: {
@@ -642,6 +651,20 @@ createApp({
       this.wpMarkers = [];
       this.updateSegments();
       this.updateWaypointDataset();
+    },
+    generateAnalysis() {
+      this.analysisText = 'Generating...';
+      fetch('/generate-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stats: this.stats })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.text) this.analysisText = marked.parse(data.text);
+          else this.analysisText = 'Failed to generate';
+        })
+        .catch(() => { this.analysisText = 'Error generating analysis'; });
     },
     onKmRowClick(_e, row) {
       if (row.start_idx != null && row.end_idx != null) {
