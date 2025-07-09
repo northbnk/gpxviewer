@@ -161,12 +161,12 @@
             <v-tab :value="1">統計情報・予測</v-tab>
             <v-tab :value="2">AI分析</v-tab>
           </v-tabs>
-          <div class="mt-2 text-right">
-            <span class="material-symbols-outlined" style="vertical-align:middle">info</span>
-            <a href="#" @click.prevent="tab = 0" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
-          </div>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
+              <div class="pb-4 text-left">
+                <span class="material-symbols-outlined" style="vertical-align:middle">info</span>
+                <a href="#" @click.prevent="tab = 1" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
+              </div>
               <div id="map" class="mb-4"></div>
               <canvas id="chart"></canvas>
               <div class="mt-4">
