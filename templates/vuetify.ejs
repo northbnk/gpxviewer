@@ -80,13 +80,13 @@
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
               <h2>キロ区間分析</h2>
-              <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact">
+              <VDataTable :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
-              </v-data-table>
+              </VDataTable>
               <h2 class="mt-4">勾配グループ分析</h2>
-              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4 group-table" density="compact" hide-default-footer items-per-page="13">
+              <VDataTable :items="summaryGroups" :headers="rateHeaders" class="mb-4 group-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -96,9 +96,9 @@
                 <template v-slot:item.avg_pace="{ item }">
                   {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
-              </v-data-table>
+              </VDataTable>
               <h2 class="mt-4">想定ペース</h2>
-              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4 estimated-table" density="compact" hide-default-footer items-per-page="13">
+              <VDataTable :items="predictedData" :headers="rateHeaders" class="mb-4 estimated-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -108,9 +108,9 @@
                 <template v-slot:item.avg_pace="{ item }">
                   {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
-              </v-data-table>
+              </VDataTable>
               <h2 class="mt-4">Split Times</h2>
-              <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></v-data-table>
+              <VDataTable :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></VDataTable>
             </v-window-item>
             <v-window-item :value="1" class="mt-4">
               <div id="map" class="mb-4"></div>
