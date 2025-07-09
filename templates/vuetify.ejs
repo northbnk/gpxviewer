@@ -76,40 +76,40 @@
               <h2>Elevation per KM</h2>
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4" density="compact">
                 <template v-slot:item.trend="{ item }">
-                  <span v-html="item.trend"></span>
+                  <span v-html="item.raw.trend"></span>
                 </template>
               </v-data-table>
               <h2 class="mt-4">Rate Groups</h2>
               <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact">
                 <template v-slot:item.trend="{ item }">
-                  <span v-html="item.trend"></span>
+                  <span v-html="item.raw.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.avg_net_rate == null ? '-' : Number(item.avg_net_rate).toFixed(2) }}
+                  {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.avg_pace == null ? '-' : Number(item.avg_pace).toFixed(2) }}
+                  {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Segments</h2>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact">
                 <template v-slot:item.net_rate="{ item }">
-                  {{ item.net_rate == null ? '-' : Number(item.net_rate).toFixed(2) }}
+                  {{ item.raw.net_rate == null ? '-' : Number(item.raw.net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.pace_min_per_km="{ item }">
-                  {{ item.pace_min_per_km == null ? '-' : Number(item.pace_min_per_km).toFixed(2) }}
+                  {{ item.raw.pace_min_per_km == null ? '-' : Number(item.raw.pace_min_per_km).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Estimated Rate</h2>
               <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact">
                 <template v-slot:item.trend="{ item }">
-                  <span v-html="item.trend"></span>
+                  <span v-html="item.raw.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.avg_net_rate == null ? '-' : Number(item.avg_net_rate).toFixed(2) }}
+                  {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.avg_pace == null ? '-' : Number(item.avg_pace).toFixed(2) }}
+                  {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Split Times</h2>
