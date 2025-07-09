@@ -461,8 +461,14 @@ createApp({
       }
     },
     initChart() {
-      const chartEl = document.getElementById('chart');
+      let chartEl = document.getElementById('chart');
       if (!chartEl) return;
+      if (this.chart) {
+        this.chart.destroy();
+        const newEl = chartEl.cloneNode(true);
+        chartEl.parentNode.replaceChild(newEl, chartEl);
+        chartEl = newEl;
+      }
       const ctx = chartEl.getContext('2d');
       // Chart.jsに渡すデータはVueのreactiveからdeep copyで非リアクティブ化
       const rawProfile = JSON.parse(JSON.stringify(this.stats.profile));
