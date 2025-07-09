@@ -85,19 +85,19 @@
                   <span v-html="item.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.avg_net_rate == null ? '-' : item.avg_net_rate.toFixed(2) }}
+                  {{ item.avg_net_rate == null ? '-' : Number(item.avg_net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.avg_pace == null ? '-' : item.avg_pace.toFixed(2) }}
+                  {{ item.avg_pace == null ? '-' : Number(item.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Segments</h2>
               <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact">
                 <template v-slot:item.net_rate="{ item }">
-                  {{ item.net_rate == null ? '-' : item.net_rate.toFixed(2) }}
+                  {{ item.net_rate == null ? '-' : Number(item.net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.pace_min_per_km="{ item }">
-                  {{ item.pace_min_per_km == null ? '-' : item.pace_min_per_km.toFixed(2) }}
+                  {{ item.pace_min_per_km == null ? '-' : Number(item.pace_min_per_km).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Estimated Rate</h2>
@@ -106,10 +106,10 @@
                   <span v-html="item.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.avg_net_rate == null ? '-' : item.avg_net_rate.toFixed(2) }}
+                  {{ item.avg_net_rate == null ? '-' : Number(item.avg_net_rate).toFixed(2) }}
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.avg_pace == null ? '-' : item.avg_pace.toFixed(2) }}
+                  {{ item.avg_pace == null ? '-' : Number(item.avg_pace).toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Split Times</h2>
@@ -229,6 +229,10 @@ createApp({
           this.stats = data.stats;
           this.segmentSummary = data.segmentSummary;
           this.predictedData = JSON.parse(JSON.stringify(data.segmentSummary.summary || []));
+          this.predictedData.forEach(r => {
+            r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
+            r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
+          });
           this.addTrendInfo(this.stats.per_km_elevation);
           if (this.segmentSummary && this.segmentSummary.summary) this.addTrendInfo(this.segmentSummary.summary);
           this.addTrendInfo(this.predictedData);
