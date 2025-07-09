@@ -58,7 +58,7 @@
     #right-panel { flex:1 1 300px; max-width:400px; }
     #layout h2 { margin:10px 0; }
     #map { width:100%; max-width:900px; height:450px; background: var(--panel-bg); }
-    #elevChart { width:100%; max-width:900px; height:auto; background: var(--panel-bg); }
+    #elevChart { width:100%; max-width:900px; height:300px; background: var(--panel-bg); }
     #perKmTable { width:100%; height:980px; }
     #segmentTable, #predTable, #splitTimesTable { width:100%; }
     .tabulator { background: var(--panel-bg); color: var(--text-color); }
@@ -150,7 +150,7 @@
           <option value="<%= v %>" <%= v === initY ? 'selected' : '' %>><%= v %>m</option>
         <% } %>
       </select>
-      <canvas id="elevChart" width="900" height="450"></canvas>
+      <canvas id="elevChart" width="900" height="300"></canvas>
     </div>
     <div id="center-panel">
       <h2>Elevation per KM</h2>
