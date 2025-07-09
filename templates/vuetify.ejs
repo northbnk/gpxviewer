@@ -152,8 +152,10 @@
                   <v-text-field v-model.number="item.raw.avg_pace" type="number" density="compact" hide-details class="editable-input" @change="computePredictedTimes"></v-text-field>
                 </template>
               </v-data-table>
+              <input type="file" ref="predFileInput" accept=".json" style="display:none" @change="onPredFileChange">
               <div class="d-flex mb-4">
                 <v-btn class="mr-2" color="primary" @click="downloadPredicted">自身のペース分析ファイルをダウンロード</v-btn>
+                <v-btn class="mr-2" color="primary" @click="triggerPredUpload">アップロード</v-btn>
                 <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
               </div>
               <h2 class="mt-4">区間想定時間</h2>
@@ -373,6 +375,32 @@ createApp({
       a.download = 'rate_groups.json';
       a.click();
       URL.revokeObjectURL(url);
+    },
+    triggerPredUpload() {
+      this.$refs.predFileInput.click();
+    },
+    onPredFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (Array.isArray(data)) {
+            this.predictedData = data.map(r => ({
+              ...r,
+              avg_net_rate: r.avg_net_rate == null ? null : Number(r.avg_net_rate),
+              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace)
+            }));
+            this.addTrendInfo(this.predictedData);
+          }
+        } catch (err) {
+          alert('Invalid JSON');
+        }
+        this.computePredictedTimes();
+        this.$refs.predFileInput.value = '';
+      };
+      reader.readAsText(file);
     },
     downloadGroups() {
       const blob = new Blob([JSON.stringify(this.summaryGroups, null, 2)], { type: 'application/json' });
