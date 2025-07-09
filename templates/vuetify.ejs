@@ -10,7 +10,7 @@
   <script src="https://unpkg.com/vue@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     #map { height: 400px; }
@@ -421,9 +421,11 @@ createApp({
       URL.revokeObjectURL(url);
     },
     initMap() {
+      const mapDiv = document.getElementById('map');
+      if (!mapDiv) return;
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
-      this.map = new google.maps.Map(document.getElementById('map'), {
+      this.map = new google.maps.Map(mapDiv, {
         zoom: 14,
         center: path[0],
         zoomControl: true,
@@ -459,12 +461,14 @@ createApp({
       }
     },
     initChart() {
-      if (!this.stats.profile || !this.stats.profile.length || !window.Chart) return;
-      const ctx = document.getElementById('chart').getContext('2d');
-      const labels = this.stats.profile.map(p => (p[0] / 1000).toFixed(1));
-      const elev = this.stats.profile.map(p => p[1]);
-      Chart.register(hoverLine);
-      Chart.register(rangeHighlight);
+      const chartEl = document.getElementById('chart');
+      if (!chartEl) return;
+      const ctx = chartEl.getContext('2d');
+      // Chart.jsに渡すデータはVueのreactiveからdeep copyで非リアクティブ化
+      const rawProfile = JSON.parse(JSON.stringify(this.stats.profile));
+      const labels = rawProfile.map(p => (p[0] / 1000).toFixed(1));
+      const elev = rawProfile.map(p => p[1]);
+      Chart.register(hoverLine, rangeHighlight);
       const self = this;
       this.chart = new Chart(ctx, {
         type: 'line',
