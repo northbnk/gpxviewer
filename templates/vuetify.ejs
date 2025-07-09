@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <title>GPX Vuetify</title>
   <link href="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <script src="https://unpkg.com/vue@3"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
@@ -23,6 +25,9 @@
     .down4 { color: #7a0000; }
     .down5 { color: #3f0000; }
     .flat { color: #808080; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -39,7 +44,7 @@
       <v-container class="mt-4">
         <v-expansion-panels v-model="uploaderPanel">
           <v-expansion-panel>
-            <v-expansion-panel-title>Upload GPX</v-expansion-panel-title>
+            <v-expansion-panel-title expand-icon="mdi-chevron-down">Upload GPX</v-expansion-panel-title>
             <v-expansion-panel-text>
               <v-file-input label="GPX File" accept=".gpx" v-model="file"></v-file-input>
               <v-btn color="primary" class="mt-2" @click="submit">Upload</v-btn>
@@ -62,7 +67,7 @@
             </v-col>
           </v-row>
 
-          <v-tabs v-model="tab" class="mt-4">
+          <v-tabs v-model="tab" class="mt-4 elevation-1" bg-color="grey-lighten-4" color="primary">
             <v-tab :value="0">統計情報・予測</v-tab>
             <v-tab :value="1">地図・高低差</v-tab>
           </v-tabs>
@@ -79,13 +84,32 @@
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.trend"></span>
                 </template>
+                <template v-slot:item.avg_net_rate="{ item }">
+                  {{ item.avg_net_rate == null ? '-' : item.avg_net_rate.toFixed(2) }}
+                </template>
+                <template v-slot:item.avg_pace="{ item }">
+                  {{ item.avg_pace == null ? '-' : item.avg_pace.toFixed(2) }}
+                </template>
               </v-data-table>
               <h2 class="mt-4">Segments</h2>
-              <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact"></v-data-table>
+              <v-data-table :items="rateGroups" :headers="segmentHeaders" class="mb-4" density="compact">
+                <template v-slot:item.net_rate="{ item }">
+                  {{ item.net_rate == null ? '-' : item.net_rate.toFixed(2) }}
+                </template>
+                <template v-slot:item.pace_min_per_km="{ item }">
+                  {{ item.pace_min_per_km == null ? '-' : item.pace_min_per_km.toFixed(2) }}
+                </template>
+              </v-data-table>
               <h2 class="mt-4">Estimated Rate</h2>
               <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.trend"></span>
+                </template>
+                <template v-slot:item.avg_net_rate="{ item }">
+                  {{ item.avg_net_rate == null ? '-' : item.avg_net_rate.toFixed(2) }}
+                </template>
+                <template v-slot:item.avg_pace="{ item }">
+                  {{ item.avg_pace == null ? '-' : item.avg_pace.toFixed(2) }}
                 </template>
               </v-data-table>
               <h2 class="mt-4">Split Times</h2>
