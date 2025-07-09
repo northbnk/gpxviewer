@@ -425,19 +425,19 @@ createApp({
       if (!mapDiv) return;
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
-      this.map = new google.maps.Map(mapDiv, {
+      this.map = Vue.markRaw(new google.maps.Map(mapDiv, {
         zoom: 14,
         center: path[0],
         zoomControl: true,
         scrollwheel: true,
         gestureHandling: 'greedy',
         mapTypeId: 'terrain'
-      });
+      }));
       const bounds = new google.maps.LatLngBounds();
       path.forEach(p => bounds.extend(p));
       this.map.fitBounds(bounds);
       const poly = new google.maps.Polyline({ path, map: this.map, strokeColor: 'blue' });
-      this.marker = new google.maps.Marker({ map: this.map });
+      this.marker = Vue.markRaw(new google.maps.Marker({ map: this.map }));
       this.map.addListener('mousemove', e => {
         const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
         this.updateHighlight(idx);
@@ -476,7 +476,7 @@ createApp({
       const elev = rawProfile.map(p => p[1]);
       Chart.register(hoverLine, rangeHighlight);
       const self = this;
-      this.chart = new Chart(ctx, {
+      this.chart = Vue.markRaw(new Chart(ctx, {
         type: 'line',
         data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
         options: {
@@ -514,7 +514,7 @@ createApp({
           }
         },
         plugins: [hoverLine, rangeHighlight]
-      });
+      }));
       document.getElementById('chart').addEventListener('mousemove', evt => {
         const els = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: false }, false);
         if (els.length) this.updateHighlight(els[0].index);
@@ -636,13 +636,13 @@ createApp({
           path.push({ lat: this.stats.trackpoints[i][0], lng: this.stats.trackpoints[i][1] });
         }
         if (!this.rangePolyline) {
-          this.rangePolyline = new google.maps.Polyline({
+          this.rangePolyline = Vue.markRaw(new google.maps.Polyline({
             path,
             map: this.map,
             strokeColor: 'red',
             strokeOpacity: 0.8,
             strokeWeight: 6
-          });
+          }));
         } else {
           this.rangePolyline.setPath(path);
           this.rangePolyline.setMap(this.map);
@@ -727,7 +727,7 @@ createApp({
         this.waypoints.push(idx);
         this.waypoints.sort((a,b) => a-b);
         if (this.map) {
-          const marker = new google.maps.Marker({ position: { lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] }, map: this.map, label: String(this.waypoints.indexOf(idx)+1) });
+          const marker = Vue.markRaw(new google.maps.Marker({ position: { lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] }, map: this.map, label: String(this.waypoints.indexOf(idx)+1) }));
           this.wpMarkers.push(marker);
         }
         this.updateSegments();
