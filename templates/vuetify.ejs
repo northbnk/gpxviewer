@@ -194,9 +194,10 @@ const { createApp } = Vue;
 let hoverLine = {
   id: 'hoverLine',
   afterDraw(chart) {
-    if (chart.tooltip && chart.tooltip._active && chart.tooltip._active.length) {
+    const active = chart.getActiveElements && chart.getActiveElements();
+    if (active && active.length) {
       const ctx = chart.ctx;
-      const x = chart.tooltip._active[0].element.x;
+      const x = active[0].element.x;
       const topY = chart.scales.y.top;
       const bottomY = chart.scales.y.bottom;
       ctx.save();
