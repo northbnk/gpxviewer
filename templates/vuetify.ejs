@@ -28,10 +28,10 @@
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-    .perkm-table .v-data-table-footer__items-per-page,
-    .perkm-table .v-data-table-footer__info,
-    .split-table .v-data-table-footer__items-per-page,
-    .split-table .v-data-table-footer__info {
+    .group-table .v-data-table-footer__items-per-page,
+    .group-table .v-data-table-footer__info,
+    .estimated-table .v-data-table-footer__items-per-page,
+    .estimated-table .v-data-table-footer__info {
       display: none;
     }
   </style>
@@ -86,7 +86,7 @@
                 </template>
               </v-data-table>
               <h2 class="mt-4">勾配グループ分析</h2>
-              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4" density="compact" hide-default-footer items-per-page="13">
+              <v-data-table :items="summaryGroups" :headers="rateHeaders" class="mb-4 group-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -98,7 +98,7 @@
                 </template>
               </v-data-table>
               <h2 class="mt-4">想定ペース</h2>
-              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4" density="compact" hide-default-footer items-per-page="13">
+              <v-data-table :items="predictedData" :headers="rateHeaders" class="mb-4 estimated-table" density="compact" hide-default-footer items-per-page="13">
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -174,33 +174,33 @@ createApp({
     summaryGroups() { return this.segmentSummary ? this.segmentSummary.summary : []; },
     perKmHeaders() {
       return [
-        { title: 'KM', key: 'km' },
-        { title: 'Gain (m)', key: 'gain' },
-        { title: 'Loss (m)', key: 'loss' },
-        { title: 'Actual Time', key: 'actual_time' },
-        { title: 'Estimated Time', key: 'pred_time' },
+        { title: 'キロ', key: 'km' },
+        { title: '上昇 (m)', key: 'gain' },
+        { title: '下降 (m)', key: 'loss' },
+        { title: '所要時間', key: 'actual_time' },
+        { title: '予想時間', key: 'pred_time' },
         { title: '', key: 'trend', sortable: false }
       ];
     },
     rateHeaders() {
       return [
         { title: '', key: 'trend', sortable: false },
-        { title: 'Group', key: 'label' },
-        { title: 'Avg Net Rate (%)', key: 'avg_net_rate' },
-        { title: 'Avg Pace (min/km)', key: 'avg_pace' }
+        { title: '勾配グループ', key: 'label' },
+        { title: '平均上昇下効率(%)', key: 'avg_net_rate' },
+        { title: '平均ペース(min/km)', key: 'avg_pace' }
       ];
     },
     segmentHeaders() {
       return [
-        { title: 'KM', key: 'km' },
-        { title: 'Net Rate', key: 'net_rate' },
-        { title: 'Pace', key: 'pace_min_per_km' }
+        { title: 'キロ', key: 'km' },
+        { title: '上昇下効率(%)', key: 'net_rate' },
+        { title: 'ペース(min/km)', key: 'pace_min_per_km' }
       ];
     },
     splitHeaders() {
       return [
-        { title: 'Distance', key: 'distance' },
-        { title: 'Predicted Time', key: 'time' }
+        { title: '区間', key: 'distance' },
+        { title: '予想時間', key: 'time' }
       ];
     }
   },
