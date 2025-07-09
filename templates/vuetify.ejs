@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GPX Vuetify</title>
+  <title>YamaMetri</title>
   <link href="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
@@ -113,7 +113,7 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>
         <img src="/favicon.ico" alt="favicon" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;">
-        トレイルランナー向けGPX分析ツール
+        YamaMetri - トレイルランナー向けGPX分析ツール
       </v-toolbar-title>
     </v-app-bar>
     <v-main>
@@ -198,8 +198,14 @@
               </v-data-table>
               <input type="file" ref="predFileInput" accept=".json" style="display:none" @change="onPredFileChange">
               <div class="d-flex mb-4">
-                <v-btn class="mr-2" color="primary" @click="triggerPredUpload">自身のペース分析ファイルをアップロード</v-btn>
-                <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
+                <v-row class="w-100" dense>
+                  <v-col cols="12" sm="auto" class="mb-2 mb-sm-0">
+                    <v-btn color="primary" @click="triggerPredUpload">自身のペース分析ファイルをアップロード</v-btn>
+                  </v-col>
+                  <v-col cols="12" sm="auto">
+                    <v-btn color="primary" @click="computePredictedTimes">再計算</v-btn>
+                  </v-col>
+                </v-row>
               </div>
               <h2 class="mt-4">区間想定時間</h2>
               <v-data-table :items="splitTimes" :headers="splitHeaders" density="compact" class="split-table"></v-data-table>
