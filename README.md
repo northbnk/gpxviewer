@@ -7,9 +7,10 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
 
 ## Usage
 
-1. Install dependencies (Express, Multer, EJS, dotenv):
+1. Install dependencies (Express, Multer, EJS, dotenv) in the `backend`
+   directory:
    ```bash
-   npm install
+   cd backend && npm install
    ```
 2. Set a Google Maps API key in the environment so the map can load. You can
    place it in a `.env` file or export it as `GOOGLE_MAPS_API_KEY` (the legacy
@@ -21,7 +22,7 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
    ```
 3. Run the server (it listens on port 8180 by default):
    ```bash
-   node app.js
+   node backend/app.js
    ```
 4. Open `http://localhost:8180` in your browser. Drop a `.gpx` file onto the page
    or use the file picker at the top to upload it. The default interface now uses
@@ -40,7 +41,7 @@ steep climbs or descents. Provide thresholds in percent for the slope over each
 kilometer:
 
 ```bash
-node analyze.js path/to/file.gpx 10 10
+node backend/analyze.js path/to/file.gpx 10 10
 ```
 
 The example above calculates how many seconds were spent on kilometers where the

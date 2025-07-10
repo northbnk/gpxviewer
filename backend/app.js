@@ -48,7 +48,7 @@ GPX統計データ: ${JSON.stringify(summary)}
 
 const app = express();
 app.use(express.json({ limit: "5mb" }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "..", "frontend")));
 const upload = multer();
 const PRED_DB = path.join(__dirname, "predicted_db.json");
 const GPX_DB = path.join(__dirname, "gpx_db.json");
@@ -106,7 +106,7 @@ function writePredicted(data) {
 }
 
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "templates"));
+app.set("views", path.join(__dirname, "..", "frontend", "templates"));
 
 app.get("/", (req, res) => {
   const apiKey =
