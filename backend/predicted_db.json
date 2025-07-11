@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "label": "-50% -    ",
+    "avg_net_rate": null,
+    "avg_pace": null,
+    "trend": "<span class=\"down1 material-symbols-outlined\">trending_down</span>"
+  },
+  {
+    "label": "-50% - -40%",
+    "avg_net_rate": null,
+    "avg_pace": null,
+    "trend": "<span class=\"down1 material-symbols-outlined\">trending_down</span>"
+  },
+  {
+    "label": "-40% - -30%",
+    "avg_net_rate": -31.8,
+    "avg_pace": 5,
+    "trend": "<span class=\"down3 material-symbols-outlined\">trending_down</span>"
+  },
+  {
+    "label": "-30% - -20%",
+    "avg_net_rate": -24.666666666666668,
+    "avg_pace": 4.777777777777778,
+    "trend": "<span class=\"down2 material-symbols-outlined\">trending_down</span>"
+  },
+  {
+    "label": "-20% - -10%",
+    "avg_net_rate": -13.799999999999999,
+    "avg_pace": 4.888888888888888,
+    "trend": "<span class=\"down1 material-symbols-outlined\">trending_down</span>"
+  },
+  {
+    "label": "-10% - -5%",
+    "avg_net_rate": -7.608333333333334,
+    "avg_pace": 4.972222222222222,
+    "trend": "<span class=\"flat material-symbols-outlined\">trending_flat</span>"
+  },
+  {
+    "label": "-5%  -   5%",
+    "avg_net_rate": -1.5338268532366892,
+    "avg_pace": 4.10043461670006,
+    "trend": "<span class=\"flat material-symbols-outlined\">trending_flat</span>"
+  },
+  {
+    "label": "5%  -  10%",
+    "avg_net_rate": 7.106666666666667,
+    "avg_pace": 3.911111111111111,
+    "trend": "<span class=\"flat material-symbols-outlined\">trending_flat</span>"
+  },
+  {
+    "label": "10% -  20%",
+    "avg_net_rate": 12.683333333333332,
+    "avg_pace": 3.777777777777778,
+    "trend": "<span class=\"up1 material-symbols-outlined\">trending_up</span>"
+  },
+  {
+    "label": "20% -  30%",
+    "avg_net_rate": 24.225,
+    "avg_pace": 4.5,
+    "trend": "<span class=\"up2 material-symbols-outlined\">trending_up</span>"
+  },
+  {
+    "label": "30% -  40%",
+    "avg_net_rate": null,
+    "avg_pace": null,
+    "trend": "<span class=\"up1 material-symbols-outlined\">trending_up</span>"
+  },
+  {
+    "label": "40% -  50%",
+    "avg_net_rate": 49.2,
+    "avg_pace": 7.333333333333333,
+    "trend": "<span class=\"up4 material-symbols-outlined\">trending_up</span>"
+  },
+  {
+    "label": "50% -    ",
+    "avg_net_rate": null,
+    "avg_pace": null,
+    "trend": "<span class=\"up1 material-symbols-outlined\">trending_up</span>"
+  }
+]
