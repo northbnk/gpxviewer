@@ -20,18 +20,22 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
    ```bash
    echo GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE > .env
    ```
-3. Run the server (it listens on port 8180 by default):
+3. Configure Supabase by setting `SUPABASE_URL` and a service key
+   (`SUPABASE_SERVICE_KEY` or `SUPABASE_KEY`) in the environment. The application
+   uses a `gpx_files` table to store metadata and saves uploaded files in the
+   `gpx` storage bucket.
+4. Run the server (it listens on port 8180 by default):
    ```bash
    node backend/app.js
    ```
-4. Open `http://localhost:8180` in your browser. Drop a `.gpx` file onto the page
+5. Open `http://localhost:8180` in your browser. Drop a `.gpx` file onto the page
    or use the file picker at the top to upload it. The default interface now uses
    Vuetify. A simpler Vue.js variant is still available at `/vue`.
-5. (Optional) To generate a textual analysis of the uploaded track using GPT,
+6. (Optional) To generate a textual analysis of the uploaded track using GPT,
    set `OPENAI_API_KEY` in the environment. A "Generate Text Report" button
    appears on the result page and will call the OpenAI API to create a short
    report describing the run.
-6. Use the "Dark mode" button next to the upload field to switch between light
+7. Use the "Dark mode" button next to the upload field to switch between light
    and dark themes.
 
 ### Command line analysis
