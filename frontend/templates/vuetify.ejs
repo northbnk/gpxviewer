@@ -598,26 +598,25 @@ createApp({
       const bounds = new google.maps.LatLngBounds();
       path.forEach(p => bounds.extend(p));
       this.map.fitBounds(bounds);
+      // Group multiple points into a single colored segment to avoid creating
+      // thousands of individual polylines which can slow down rendering.
+      const step = 20; // number of points per segment
       const segments = [];
-      let segPath = [path[0]];
-      let prevColor = this.slopeColor(0);
-      for (let i = 1; i < this.stats.trackpoints.length; i++) {
-        const prev = this.stats.trackpoints[i-1];
-        const cur = this.stats.trackpoints[i];
-        const dist = cur[4] - prev[4];
-        const diff = (cur[2] != null && prev[2] != null) ? cur[2] - prev[2] : 0;
+      for (let i = 0; i < this.stats.trackpoints.length - 1; i += step) {
+        const startIdx = i;
+        const endIdx = Math.min(i + step, this.stats.trackpoints.length - 1);
+        const start = this.stats.trackpoints[startIdx];
+        const end = this.stats.trackpoints[endIdx];
+        const dist = end[4] - start[4];
+        const diff = (end[2] != null && start[2] != null) ? end[2] - start[2] : 0;
         const rate = dist > 0 ? (diff / dist) * 100 : 0;
         const color = this.slopeColor(rate);
-        const pt = { lat: cur[0], lng: cur[1] };
-        if (color !== prevColor) {
-          segments.push({ path: segPath, color: prevColor });
-          segPath = [ { lat: prev[0], lng: prev[1] }, pt ];
-          prevColor = color;
-        } else {
-          segPath.push(pt);
+        const segPath = [];
+        for (let j = startIdx; j <= endIdx; j++) {
+          segPath.push({ lat: this.stats.trackpoints[j][0], lng: this.stats.trackpoints[j][1] });
         }
+        segments.push({ path: segPath, color });
       }
-      segments.push({ path: segPath, color: prevColor });
       segments.forEach(seg => {
         const poly = new google.maps.Polyline({
           path: seg.path,
