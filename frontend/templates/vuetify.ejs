@@ -622,8 +622,8 @@ createApp({
           path: seg.path,
           map: this.map,
           strokeColor: seg.color,
-          strokeOpacity: 0.9,
-          strokeWeight: 4
+          strokeOpacity: 1,
+          strokeWeight: 6
         });
         poly.addListener('mousemove', e => {
           const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
