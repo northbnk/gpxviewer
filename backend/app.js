@@ -144,12 +144,12 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
     }
 
     const { error: dbErr } = await supabase.from(GPX_TABLE).insert({
-      id,
+      user_id:id,
       uid: req.uid,
       name: req.file.originalname,
       title: req.body.title || "",
       path: pathOnStorage,
-      created: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     });
 
     if (dbErr) {
@@ -181,9 +181,9 @@ app.post("/api/predicted", (req, res) => {
 app.get("/api/gpx", async (req, res) => {
   const { data, error } = await supabase
     .from(GPX_TABLE)
-    .select("id,name,title,created")
+    .select("id,name,title,created_at")
     .eq("uid", req.uid)
-    .order("created", { ascending: false });
+    .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: "Failed to fetch list" });
   res.json({ data });
 });
@@ -193,7 +193,7 @@ app.get("/api/gpx/:id", async (req, res) => {
   const { data: entry, error } = await supabase
     .from(GPX_TABLE)
     .select("path")
-    .eq("id", id)
+    .eq("user_id", id)
     .eq("uid", req.uid)
     .single();
   if (error || !entry) return res.status(404).json({ error: "Not found" });
