@@ -157,10 +157,20 @@
               <v-list density="compact">
                 <template v-for="(g, idx) in savedGpxList" :key="g.id">
                   <v-list-item>
-                    <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
+                    <v-list-item-title>
+                      <span v-if="editId !== g.id">{{ g.title || '(no title)' }}</span>
+                      <v-text-field
+                        v-else
+                        v-model="editTitleTemp"
+                        density="compact"
+                        hide-details
+                        class="editable-input"
+                        style="max-width: 140px;"
+                      ></v-text-field>
+                    </v-list-item-title>
                     <v-list-item-subtitle>{{ g.name }} - {{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
                     <template #append>
-                      <v-btn size="small" class="mr-1" @click="editTitle(g)">編集</v-btn>
+                      <v-btn size="small" class="mr-1" @click="toggleEdit(g)">{{ editId === g.id ? '保存' : '編集' }}</v-btn>
                       <v-btn size="small" class="mr-1" @click="deleteSaved(g)">削除</v-btn>
                       <v-btn size="small" @click="loadSavedGpx(g)">読み込む</v-btn>
                     </template>
@@ -376,8 +386,10 @@ createApp({
       title: '',
       gpxId: null,
       deleteDialog: false,
-      deleteTarget: null
-    };
+      deleteTarget: null,
+      editId: null,
+      editTitleTemp: ''
+      };
   },
   created() {
     this.loadPredicted();
@@ -479,7 +491,7 @@ createApp({
     loadSavedList() {
       fetch('/api/gpx')
         .then(res => res.json())
-        .then(json => { this.savedGpxList = Array.isArray(json.data) ? json.data : []; })
+        .then(json => { this.savedGpxList = Array.isArray(json.data) ? json.data : []; this.editId = null; })
         .catch(() => { this.savedGpxList = []; });
     },
     loadSavedGpx(g) {
@@ -494,16 +506,18 @@ createApp({
         })
         .catch(() => alert('Failed to load GPX'));
     },
-    editTitle(g) {
-      const newTitle = prompt('タイトルを入力', g.title || '');
-      if (newTitle != null) {
+    toggleEdit(g) {
+      if (this.editId === g.id) {
         fetch(`/api/gpx/${g.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: newTitle })
+          body: JSON.stringify({ title: this.editTitleTemp })
         })
           .then(() => this.loadSavedList())
           .catch(() => {});
+      } else {
+        this.editId = g.id;
+        this.editTitleTemp = g.title || '';
       }
     },
     deleteSaved(g) {
