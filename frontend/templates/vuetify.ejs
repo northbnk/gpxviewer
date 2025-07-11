@@ -497,7 +497,7 @@ createApp({
       if (!confirm('削除しますか？')) return;
       fetch(`/api/gpx/${g.id}`, { method: 'DELETE' })
         .then(() => this.loadSavedList())
-        .catch(() => {});
+        .catch((err) => { console.error(err); });
     },
     applyStats(data) {
       this.stats = data.stats;

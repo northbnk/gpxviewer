@@ -249,10 +249,11 @@ app.patch("/api/gpx/:id", async (req, res) => {
 
 app.delete("/api/gpx/:id", async (req, res) => {
   const id = req.params.id;
+  console.log(`Deleting GPX with ID: ${id}, UID: ${req.uid}`);
   const { data: entry, error } = await supabase
     .from(GPX_TABLE)
     .select("path")
-    .eq("user_id", id)
+    .eq("id", id)
     .eq("uid", req.uid)
     .single();
   if (error || !entry) return res.status(404).json({ error: "Not found" });
@@ -265,7 +266,7 @@ app.delete("/api/gpx/:id", async (req, res) => {
   const { error: dbErr } = await supabase
     .from(GPX_TABLE)
     .delete()
-    .eq("user_id", id)
+    .eq("id", id)
     .eq("uid", req.uid);
 
   if (delErr || dbErr) {
