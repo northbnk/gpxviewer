@@ -4,7 +4,16 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { createClient } = require("@supabase/supabase-js");
 const { parseGpx, summarizeStats, analyzeSegments } = require("./gpxutils.js");
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || "",
+);
+
+const GPX_TABLE = "gpx_files";
+const GPX_BUCKET = "gpx";
 
 function augmentStats(stats) {
   if (stats.trackpoints && stats.trackpoints.length > 1) {
@@ -51,19 +60,6 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 const upload = multer();
 const PRED_DB = path.join(__dirname, "predicted_db.json");
-const GPX_DB = path.join(__dirname, "gpx_db.json");
-
-function readGpxDb() {
-  try {
-    return JSON.parse(fs.readFileSync(GPX_DB, "utf8"));
-  } catch (_) {
-    return [];
-  }
-}
-
-function writeGpxDb(data) {
-  fs.writeFileSync(GPX_DB, JSON.stringify(data, null, 2));
-}
 
 function parseCookies(req) {
   const header = req.headers.cookie || "";
@@ -134,17 +130,33 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
     const text = req.file.buffer.toString();
     const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
-    const all = readGpxDb();
     const id = crypto.randomUUID();
-    all.push({
+    const pathOnStorage = `${id}.gpx`;
+
+    const { error: uploadErr } = await supabase
+      .storage
+      .from(GPX_BUCKET)
+      .upload(pathOnStorage, req.file.buffer);
+
+    if (uploadErr) {
+      console.error(uploadErr);
+      return res.status(500).json({ error: "Failed to store file" });
+    }
+
+    const { error: dbErr } = await supabase.from(GPX_TABLE).insert({
       id,
       uid: req.uid,
       name: req.file.originalname,
-      title: req.body.title || '',
-      gpx: text,
-      created: Date.now(),
+      title: req.body.title || "",
+      path: pathOnStorage,
+      created: new Date().toISOString(),
     });
-    writeGpxDb(all);
+
+    if (dbErr) {
+      console.error(dbErr);
+      return res.status(500).json({ error: "Failed to save metadata" });
+    }
+
     res.json({ id, stats, segmentSummary });
   } catch (err) {
     res.status(400).json({ error: "Failed to parse" });
@@ -166,19 +178,39 @@ app.post("/api/predicted", (req, res) => {
   }
 });
 
-app.get("/api/gpx", (req, res) => {
-  const list = readGpxDb()
-    .filter((r) => r.uid === req.uid)
-    .map(({ id, name, title, created }) => ({ id, name, title, created }));
-  res.json({ data: list });
+app.get("/api/gpx", async (req, res) => {
+  const { data, error } = await supabase
+    .from(GPX_TABLE)
+    .select("id,name,title,created")
+    .eq("uid", req.uid)
+    .order("created", { ascending: false });
+  if (error) return res.status(500).json({ error: "Failed to fetch list" });
+  res.json({ data });
 });
 
-app.get("/api/gpx/:id", (req, res) => {
+app.get("/api/gpx/:id", async (req, res) => {
   const id = req.params.id;
-  const entry = readGpxDb().find((r) => r.id === id && r.uid === req.uid);
-  if (!entry) return res.status(404).json({ error: "Not found" });
+  const { data: entry, error } = await supabase
+    .from(GPX_TABLE)
+    .select("path")
+    .eq("id", id)
+    .eq("uid", req.uid)
+    .single();
+  if (error || !entry) return res.status(404).json({ error: "Not found" });
+
+  const { data: fileData, error: downloadErr } = await supabase
+    .storage
+    .from(GPX_BUCKET)
+    .download(entry.path);
+
+  if (downloadErr || !fileData) {
+    console.error(downloadErr);
+    return res.status(500).json({ error: "Failed to load file" });
+  }
+
   try {
-    const stats = parseGpx(entry.gpx);
+    const text = await fileData.text();
+    const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
     res.json({ stats, segmentSummary });
   } catch (err) {
