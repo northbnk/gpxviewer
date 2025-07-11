@@ -57,7 +57,13 @@ createApp({
         center: path[0],
         mapTypeId: 'terrain'
       });
-      new google.maps.Polyline({ path, map, strokeColor: 'blue' });
+      new google.maps.Polyline({
+        path,
+        map,
+        strokeColor: 'blue',
+        strokeOpacity: 1,
+        strokeWeight: 6
+      });
       if (this.stats.waypoints) {
         this.stats.waypoints.forEach(wp => {
           new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map, title: wp.name || '' });
