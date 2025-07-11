@@ -163,6 +163,20 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
   }
 });
 
+app.post("/api/parse", upload.single("gpxfile"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file" });
+  }
+  try {
+    const text = req.file.buffer.toString();
+    const stats = parseGpx(text);
+    const segmentSummary = analyzeSegments(stats);
+    res.json({ stats, segmentSummary });
+  } catch (err) {
+    res.status(400).json({ error: "Failed to parse" });
+  }
+});
+
 app.get("/api/predicted", (req, res) => {
   res.json({ data: readPredicted() });
 });
@@ -216,6 +230,21 @@ app.get("/api/gpx/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to parse" });
   }
+});
+
+app.patch("/api/gpx/:id", async (req, res) => {
+  const id = req.params.id;
+  const title = req.body.title;
+  if (typeof title !== "string") {
+    return res.status(400).json({ error: "Invalid title" });
+  }
+  const { error } = await supabase
+    .from(GPX_TABLE)
+    .update({ title })
+    .eq("user_id", id)
+    .eq("uid", req.uid);
+  if (error) return res.status(500).json({ error: "Failed to update" });
+  res.json({ status: "ok" });
 });
 
 app.post("/generate-analysis", async (req, res) => {
