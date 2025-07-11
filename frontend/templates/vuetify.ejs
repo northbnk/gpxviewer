@@ -172,13 +172,24 @@
                 </v-list-item>
               </v-list>
             </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
+        </v-expansion-panel>
+      </v-expansion-panels>
 
-        <div v-if="!stats.trackpoints || !stats.trackpoints.length" class="mt-6">
-          <v-alert type="info" border="start" color="primary" variant="tonal">
-            GPXファイルをアップロードしてください。
-          </v-alert>
+      <v-dialog v-model="deleteDialog" width="400">
+        <v-card>
+          <v-card-title class="text-h6">削除しますか？</v-card-title>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="deleteDialog = false">キャンセル</v-btn>
+            <v-btn color="red" text @click="confirmDelete">削除</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <div v-if="!stats.trackpoints || !stats.trackpoints.length" class="mt-6">
+        <v-alert type="info" border="start" color="primary" variant="tonal">
+          GPXファイルをアップロードしてください。
+        </v-alert>
         </div>
         <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
           <v-row>
@@ -363,7 +374,9 @@ createApp({
       analysisText: '',
       isDragOver: false,
       title: '',
-      gpxId: null
+      gpxId: null,
+      deleteDialog: false,
+      deleteTarget: null
     };
   },
   created() {
@@ -494,10 +507,21 @@ createApp({
       }
     },
     deleteSaved(g) {
-      if (!confirm('削除しますか？')) return;
-      fetch(`/api/gpx/${g.id}`, { method: 'DELETE' })
-        .then(() => this.loadSavedList())
-        .catch((err) => { console.error(err); });
+      this.deleteTarget = g;
+      this.deleteDialog = true;
+    },
+    confirmDelete() {
+      if (!this.deleteTarget) return;
+      fetch(`/api/gpx/${this.deleteTarget.id}`, { method: 'DELETE' })
+        .then(() => {
+          this.loadSavedList();
+          this.deleteDialog = false;
+          this.deleteTarget = null;
+        })
+        .catch((err) => {
+          console.error(err);
+          this.deleteDialog = false;
+        });
     },
     applyStats(data) {
       this.stats = data.stats;
