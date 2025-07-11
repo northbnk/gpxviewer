@@ -624,8 +624,7 @@ createApp({
           map: this.map,
           strokeColor: seg.color,
           strokeOpacity: 0.9,
-          strokeWeight: 4,
-          icons: [{ icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW }, offset: '0', repeat: '100px' }]
+          strokeWeight: 4
         });
         poly.addListener('mousemove', e => {
           const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
