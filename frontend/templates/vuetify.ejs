@@ -569,14 +569,14 @@ createApp({
       URL.revokeObjectURL(url);
     },
     slopeColor(rate) {
-      if (rate > 8) return '#800080'; // 紫
-      if (rate > 5) return '#FF0000'; // 赤
-      if (rate > 2) return '#FFFF00'; // 黄
-      if (rate > 1) return '#00FF00'; // 緑
-      if (rate >= -1) return '#003366'; // 紺
-      if (rate > -5) return '#0077CC'; // 青
-      if (rate > -8) return '#00CCFF'; // 水色
-      return '#00CC99'; // 青緑
+    if (rate > 8) return '#B000FF'; // ビビッドパープル（紫）
+    if (rate > 5) return '#FF0033'; // ビビッドレッド
+    if (rate > 2) return '#FF8000'; // 蛍光オレンジ
+    if (rate > 1) return '#FFFF00'; // 蛍光イエロー
+    if (rate >= -1) return '#00FFFF'; // 蛍光ブルー（水色）
+    if (rate > -5) return '#0080FF'; // ビビッドブルー
+    if (rate > -8) return '#00FFCC'; // 蛍光シアン
+    return '#FF00FF';
     },
     initMap() {
       const mapDiv = document.getElementById('map');
