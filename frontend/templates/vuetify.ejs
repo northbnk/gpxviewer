@@ -335,6 +335,7 @@ createApp({
       startMarker: null,
       finishMarker: null,
       rangePolyline: null,
+      trackPolylines: [],
       waypoints: [],
       wpMarkers: [],
       ranges: [
@@ -567,12 +568,24 @@ createApp({
       a.click();
       URL.revokeObjectURL(url);
     },
+    slopeColor(rate) {
+      if (rate > 8) return '#ff0000';
+      if (rate > 5) return '#ff5555';
+      if (rate > 2) return '#ff8888';
+      if (rate > 1) return '#ffcccc';
+      if (rate >= -1) return '#708090';
+      if (rate > -5) return '#dcdcdc';
+      if (rate > -8) return '#f0f0f0';
+      return '#ffffff';
+    },
     initMap() {
       const mapDiv = document.getElementById('map');
       if (!mapDiv) return;
       if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
       if (this.startMarker) { this.startMarker.setMap(null); this.startMarker = null; }
       if (this.finishMarker) { this.finishMarker.setMap(null); this.finishMarker = null; }
+      this.trackPolylines.forEach(p => p.setMap(null));
+      this.trackPolylines = [];
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
       this.map = Vue.markRaw(new google.maps.Map(mapDiv, {
         zoom: 14,
@@ -585,11 +598,43 @@ createApp({
       const bounds = new google.maps.LatLngBounds();
       path.forEach(p => bounds.extend(p));
       this.map.fitBounds(bounds);
-      const poly = new google.maps.Polyline({
-        path,
-        map: this.map,
-        strokeColor: 'blue',
-        icons: [{ icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW }, offset: '0', repeat: '100px' }]
+      const segments = [];
+      let segPath = [path[0]];
+      let prevColor = this.slopeColor(0);
+      for (let i = 1; i < this.stats.trackpoints.length; i++) {
+        const prev = this.stats.trackpoints[i-1];
+        const cur = this.stats.trackpoints[i];
+        const dist = cur[4] - prev[4];
+        const diff = (cur[2] != null && prev[2] != null) ? cur[2] - prev[2] : 0;
+        const rate = dist > 0 ? (diff / dist) * 100 : 0;
+        const color = this.slopeColor(rate);
+        const pt = { lat: cur[0], lng: cur[1] };
+        if (color !== prevColor) {
+          segments.push({ path: segPath, color: prevColor });
+          segPath = [ { lat: prev[0], lng: prev[1] }, pt ];
+          prevColor = color;
+        } else {
+          segPath.push(pt);
+        }
+      }
+      segments.push({ path: segPath, color: prevColor });
+      segments.forEach(seg => {
+        const poly = new google.maps.Polyline({
+          path: seg.path,
+          map: this.map,
+          strokeColor: seg.color,
+          strokeOpacity: 0.9,
+          strokeWeight: 4
+        });
+        poly.addListener('mousemove', e => {
+          const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+          this.updateHighlight(idx);
+        });
+        poly.addListener('click', e => {
+          const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+          this.addWaypoint(idx);
+        });
+        this.trackPolylines.push(poly);
       });
       this.marker = Vue.markRaw(new google.maps.Marker({ map: this.map }));
       this.startMarker = Vue.markRaw(new google.maps.Marker({ position: path[0], map: this.map, label: 'S' }));
@@ -598,15 +643,7 @@ createApp({
         const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
         this.updateHighlight(idx);
       });
-      poly.addListener('mousemove', e => {
-        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
-        this.updateHighlight(idx);
-      });
       this.map.addListener('click', e => {
-        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
-        this.addWaypoint(idx);
-      });
-      poly.addListener('click', e => {
         const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
         this.addWaypoint(idx);
       });
