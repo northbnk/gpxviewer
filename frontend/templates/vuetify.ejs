@@ -149,7 +149,7 @@
                   <v-text-field v-model="title" label="タイトル"></v-text-field>
                 </v-col>
                 <v-col cols="auto">
-                  <v-btn color="primary" @click="submit">保存</v-btn>
+                  <v-btn color="primary" @click="saveGpx">保存</v-btn>
                 </v-col>
               </v-row>
               <v-divider class="my-2"></v-divider>
@@ -159,7 +159,7 @@
                   <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
                   <v-list-item-subtitle>{{ g.name }} - {{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
                   <template #append>
-                    <v-btn size="small" @click="loadSavedGpx(g.id)">読み込む</v-btn>
+                    <v-btn size="small" @click="loadSavedGpx(g)">読み込む</v-btn>
                   </template>
                 </v-list-item>
                 <v-list-item v-if="!savedGpxList.length">
@@ -357,7 +357,8 @@ createApp({
       tab: 0,
       analysisText: '',
       isDragOver: false,
-      title: ''
+      title: '',
+      gpxId: null
     };
   },
   created() {
@@ -463,11 +464,14 @@ createApp({
         .then(json => { this.savedGpxList = Array.isArray(json.data) ? json.data : []; })
         .catch(() => { this.savedGpxList = []; });
     },
-    loadSavedGpx(id) {
-      fetch(`/api/gpx/${id}`)
+    loadSavedGpx(g) {
+      if (!g) return;
+      fetch(`/api/gpx/${g.id}`)
         .then(res => res.json())
         .then(data => {
           this.applyStats(data);
+          this.gpxId = g.id;
+          this.title = g.title || '';
           this.uploaderPanel = null;
         })
         .catch(() => alert('Failed to load GPX'));
@@ -507,20 +511,44 @@ createApp({
         this.updateWaypointDataset();
       });
     },
-    submit() {
+    saveGpx() {
+      const file = Array.isArray(this.file) ? this.file[0] : this.file;
+      if (!this.gpxId) {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('gpxfile', file);
+        formData.append('title', this.title);
+        fetch('/api/upload', { method: 'POST', body: formData })
+          .then(res => res.json())
+          .then(data => {
+            this.applyStats(data);
+            this.gpxId = data.id;
+            this.loadSavedList();
+            this.uploaderPanel = null;
+            this.title = '';
+            this.file = null;
+          })
+          .catch(() => alert('Failed to parse GPX'));
+      } else {
+        fetch(`/api/gpx/${this.gpxId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: this.title })
+        })
+          .then(() => this.loadSavedList())
+          .catch(() => {});
+      }
+    },
+    parseFile() {
       const file = Array.isArray(this.file) ? this.file[0] : this.file;
       if (!file) return;
       const formData = new FormData();
       formData.append('gpxfile', file);
-      formData.append('title', this.title);
-      fetch('/api/upload', { method: 'POST', body: formData })
+      fetch('/api/parse', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
           this.applyStats(data);
-          this.uploaderPanel = null;
-          this.loadSavedList();
-          this.title = '';
-          this.file = null;
+          this.gpxId = null;
         })
         .catch(() => alert('Failed to parse GPX'));
     },
@@ -976,13 +1004,13 @@ createApp({
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         this.file = files[0];
-        this.submit();
+        this.parseFile();
       }
     },
     onFileChange() {
       const file = Array.isArray(this.file) ? this.file[0] : this.file;
       if (file) {
-        this.submit();
+        this.parseFile();
       }
     },
     // ...existing code...
