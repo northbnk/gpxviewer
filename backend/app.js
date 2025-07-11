@@ -247,6 +247,35 @@ app.patch("/api/gpx/:id", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.delete("/api/gpx/:id", async (req, res) => {
+  const id = req.params.id;
+  const { data: entry, error } = await supabase
+    .from(GPX_TABLE)
+    .select("path")
+    .eq("user_id", id)
+    .eq("uid", req.uid)
+    .single();
+  if (error || !entry) return res.status(404).json({ error: "Not found" });
+
+  const { error: delErr } = await supabase
+    .storage
+    .from(GPX_BUCKET)
+    .remove([entry.path]);
+
+  const { error: dbErr } = await supabase
+    .from(GPX_TABLE)
+    .delete()
+    .eq("user_id", id)
+    .eq("uid", req.uid);
+
+  if (delErr || dbErr) {
+    console.error(delErr || dbErr);
+    return res.status(500).json({ error: "Failed to delete" });
+  }
+
+  res.json({ status: "ok" });
+});
+
 app.post("/generate-analysis", async (req, res) => {
   const stats = req.body.stats;
   if (!stats) return res.status(400).json({ error: "Missing stats" });
