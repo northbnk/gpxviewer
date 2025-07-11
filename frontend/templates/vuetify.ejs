@@ -155,13 +155,18 @@
               <v-divider class="my-2"></v-divider>
               <h3 class="mt-2 mb-1">保存済みGPXファイル一覧</h3>
               <v-list density="compact">
-                <v-list-item v-for="g in savedGpxList" :key="g.id">
-                  <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ g.name }} - {{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
-                  <template #append>
-                    <v-btn size="small" @click="loadSavedGpx(g)">読み込む</v-btn>
-                  </template>
-                </v-list-item>
+                <template v-for="(g, idx) in savedGpxList" :key="g.id">
+                  <v-list-item>
+                    <v-list-item-title>{{ g.title || '(no title)' }}</v-list-item-title>
+                    <v-list-item-subtitle>{{ g.name }} - {{ new Date(g.created).toLocaleString() }}</v-list-item-subtitle>
+                    <template #append>
+                      <v-btn size="small" class="mr-1" @click="editTitle(g)">編集</v-btn>
+                      <v-btn size="small" class="mr-1" @click="deleteSaved(g)">削除</v-btn>
+                      <v-btn size="small" @click="loadSavedGpx(g)">読み込む</v-btn>
+                    </template>
+                  </v-list-item>
+                  <v-divider v-if="idx < savedGpxList.length - 1"></v-divider>
+                </template>
                 <v-list-item v-if="!savedGpxList.length">
                   <v-list-item-title>保存されたデータはありません</v-list-item-title>
                 </v-list-item>
@@ -475,6 +480,24 @@ createApp({
           this.uploaderPanel = null;
         })
         .catch(() => alert('Failed to load GPX'));
+    },
+    editTitle(g) {
+      const newTitle = prompt('タイトルを入力', g.title || '');
+      if (newTitle != null) {
+        fetch(`/api/gpx/${g.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle })
+        })
+          .then(() => this.loadSavedList())
+          .catch(() => {});
+      }
+    },
+    deleteSaved(g) {
+      if (!confirm('削除しますか？')) return;
+      fetch(`/api/gpx/${g.id}`, { method: 'DELETE' })
+        .then(() => this.loadSavedList())
+        .catch(() => {});
     },
     applyStats(data) {
       this.stats = data.stats;
