@@ -569,14 +569,14 @@ createApp({
       URL.revokeObjectURL(url);
     },
     slopeColor(rate) {
-      if (rate > 8) return '#ff0000';
-      if (rate > 5) return '#ff5555';
-      if (rate > 2) return '#ff8888';
-      if (rate > 1) return '#ffcccc';
-      if (rate >= -1) return '#708090';
-      if (rate > -5) return '#dcdcdc';
-      if (rate > -8) return '#f0f0f0';
-      return '#ffffff';
+      if (rate > 8) return '#800080'; // 紫
+      if (rate > 5) return '#FF0000'; // 赤
+      if (rate > 2) return '#FFFF00'; // 黄
+      if (rate > 1) return '#00FF00'; // 緑
+      if (rate >= -1) return '#003366'; // 紺
+      if (rate > -5) return '#0077CC'; // 青
+      if (rate > -8) return '#00CCFF'; // 水色
+      return '#00CC99'; // 青緑
     },
     initMap() {
       const mapDiv = document.getElementById('map');
