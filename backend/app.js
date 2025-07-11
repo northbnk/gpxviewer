@@ -241,7 +241,7 @@ app.patch("/api/gpx/:id", async (req, res) => {
   const { error } = await supabase
     .from(GPX_TABLE)
     .update({ title })
-    .eq("user_id", id)
+    .eq("id", id)
     .eq("uid", req.uid);
   if (error) return res.status(500).json({ error: "Failed to update" });
   res.json({ status: "ok" });
