@@ -576,7 +576,7 @@ createApp({
     if (rate >= -1) return '#00FFFF'; // 蛍光ブルー（水色）
     if (rate > -5) return '#0080FF'; // ビビッドブルー
     if (rate > -8) return '#00FFCC'; // 蛍光シアン
-    return '#FF00FF';
+    return '#0099FF';
     },
     initMap() {
       const mapDiv = document.getElementById('map');
@@ -601,7 +601,7 @@ createApp({
       // Group multiple points into a single colored segment to avoid creating
       // thousands of individual polylines which can slow down rendering.
       // Use smaller segments so the color changes are more fine grained
-      const step = 10; // number of points per segment
+      const step = 5; // number of points per segment
       const segments = [];
       for (let i = 0; i < this.stats.trackpoints.length - 1; i += step) {
         const startIdx = i;
