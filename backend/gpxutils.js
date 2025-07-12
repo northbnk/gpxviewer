@@ -13,41 +13,48 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 
 function extractTrackpoints(text) {
-  const trackpoints = [];
-  const regex = /<trkpt\b([^>]*)(?:\/>|>([\s\S]*?)<\/trkpt>)/g;
-  let match;
-  let highest = -Infinity;
-  let lowest = Infinity;
-  while ((match = regex.exec(text)) !== null) {
-    const attrs = match[1];
-    const content = match[2] || "";
-    const latMatch = /lat="([^"]+)"/.exec(attrs);
-    const lonMatch = /lon="([^"]+)"/.exec(attrs);
-    if (!latMatch || !lonMatch) continue;
-    let ele = null;
-    const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(content);
-    if (eleMatch) {
-      ele = parseFloat(eleMatch[1].trim());
-      if (ele > highest) highest = ele;
-      if (ele < lowest) lowest = ele;
+  const parse = (tag) => {
+    const arr = [];
+    const reg = new RegExp(`<${tag}\\b([^>]*)(?:/>|>([\\s\\S]*?)</${tag}>)`, "g");
+    let m;
+    let hi = -Infinity;
+    let lo = Infinity;
+    while ((m = reg.exec(text)) !== null) {
+      const attrs = m[1];
+      const content = m[2] || "";
+      const latMatch = /lat="([^"]+)"/.exec(attrs);
+      const lonMatch = /lon="([^"]+)"/.exec(attrs);
+      if (!latMatch || !lonMatch) continue;
+      let ele = null;
+      const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(content);
+      if (eleMatch) {
+        ele = parseFloat(eleMatch[1].trim());
+        if (ele > hi) hi = ele;
+        if (ele < lo) lo = ele;
+      }
+      let time = null;
+      const timeMatch = /<time>([^<]+)<\/time>/i.exec(content);
+      if (timeMatch) {
+        const t = Date.parse(timeMatch[1].trim());
+        if (!Number.isNaN(t)) time = t;
+      }
+      arr.push([parseFloat(latMatch[1]), parseFloat(lonMatch[1]), ele, time]);
     }
-    let time = null;
-    const timeMatch = /<time>([^<]+)<\/time>/i.exec(content);
-    if (timeMatch) {
-      const t = Date.parse(timeMatch[1].trim());
-      if (!Number.isNaN(t)) time = t;
-    }
-    trackpoints.push([
-      parseFloat(latMatch[1]),
-      parseFloat(lonMatch[1]),
-      ele,
-      time,
-    ]);
+    return { arr, hi, lo };
+  };
+
+  let { arr, hi, lo } = parse("trkpt");
+  if (arr.length === 0) {
+    const alt = parse("rtept");
+    arr = alt.arr;
+    hi = alt.hi;
+    lo = alt.lo;
   }
+
   return {
-    trackpoints,
-    highest: highest === -Infinity ? null : highest,
-    lowest: lowest === Infinity ? null : lowest,
+    trackpoints: arr,
+    highest: hi === -Infinity ? null : hi,
+    lowest: lo === Infinity ? null : lo,
   };
 }
 
@@ -73,6 +80,9 @@ function extractWaypoints(text) {
 }
 
 function calcPerKmStats(trackpoints, step = 100) {
+  if (!trackpoints || trackpoints.length === 0) {
+    return { perKm: [], profile: [], distance: 0, totalGain: 0, totalLoss: 0 };
+  }
   let dist = 0;
   const perKm = [];
   const profile = [[0, trackpoints[0][2]]];
@@ -209,6 +219,9 @@ function analyzeSlopeTime(stats, upThreshold, downThreshold) {
 }
 
 function analyzeSegments(stats, interval = 500) {
+  if (!stats.trackpoints || stats.trackpoints.length === 0) {
+    return { segments: [], summary: [] };
+  }
   const { perKm } = calcPerKmStats(stats.trackpoints, interval);
   const segments = [];
   const numSegs = Math.ceil(stats.distance_m / interval);
