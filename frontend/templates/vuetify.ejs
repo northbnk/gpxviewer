@@ -204,6 +204,36 @@
         </v-card>
       </v-dialog>
 
+      <v-dialog v-model="introDialog" max-width="500">
+        <v-card>
+          <v-card-title class="text-h6">初めての方へ</v-card-title>
+          <v-card-text>
+            <ul>
+              <li>概要
+                <ul>
+                  <li>GPXファイルを地図とグラフで表示できます</li>
+                  <li>ランニングや登山ログを手軽に分析するために作りました</li>
+                </ul>
+              </li>
+              <li>操作説明
+                <ul>
+                  <li>上部のアップロード欄からGPXファイルを選択します</li>
+                </ul>
+              </li>
+              <li>便利な使い方
+                <ul>
+                  <li>保存機能やAI分析を活用するとより詳しく振り返れます</li>
+                </ul>
+              </li>
+            </ul>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="introDialog = false">閉じる</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <div v-if="!stats.trackpoints || !stats.trackpoints.length" class="mt-6">
         <v-alert type="info" border="start" color="primary" variant="tonal">
           GPXファイルをアップロードしてください。
@@ -393,12 +423,17 @@ createApp({
       deleteDialog: false,
       deleteTarget: null,
       editId: null,
-      editTitleTemp: ''
+      editTitleTemp: '',
+      introDialog: false
       };
   },
   created() {
     this.loadPredicted();
     this.loadSavedList();
+    if (!localStorage.getItem('introShown')) {
+      this.introDialog = true;
+      localStorage.setItem('introShown', '1');
+    }
   },
   computed: {
     summaryStats() {
