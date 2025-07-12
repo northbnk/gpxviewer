@@ -44,4 +44,10 @@ assert.strictEqual(stats.waypoints.length, 2);
 assert.strictEqual(stats.waypoints[0].name, "WP1");
 assert.strictEqual(stats.waypoints[1].name, "WP2");
 
+data = fs.readFileSync("testdata/kirishimaebino_long13th.gpx", "utf8");
+stats = parseGpx(data);
+assert(stats.points > 1000);
+assert(stats.distance_m > 60000);
+assert(stats.total_gain_m > 3000);
+
 console.log("All tests passed");
