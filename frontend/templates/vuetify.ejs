@@ -489,7 +489,7 @@ createApp({
     },
     loadPredicted() {
       fetch('/api/predicted')
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject())
         .then(json => {
           const data = json.data;
           if (Array.isArray(data)) {
@@ -506,14 +506,14 @@ createApp({
     },
     loadSavedList() {
       fetch('/api/gpx')
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject())
         .then(json => { this.savedGpxList = Array.isArray(json.data) ? json.data : []; this.editId = null; })
         .catch(() => { this.savedGpxList = []; });
     },
     loadSavedGpx(g) {
       if (!g) return;
       fetch(`/api/gpx/${g.id}`)
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject())
         .then(data => {
           this.applyStats(data);
           this.gpxId = g.id;
@@ -554,6 +554,10 @@ createApp({
         });
     },
     applyStats(data) {
+      if (!data || !data.stats) {
+        alert('Failed to load GPX');
+        return;
+      }
       this.stats = data.stats;
       this.segmentSummary = data.segmentSummary;
       if (this.segmentSummary && this.segmentSummary.summary) {
@@ -596,7 +600,7 @@ createApp({
         formData.append('gpxfile', file);
         formData.append('title', this.title);
         fetch('/api/upload', { method: 'POST', body: formData })
-          .then(res => res.json())
+          .then(res => res.ok ? res.json() : Promise.reject())
           .then(data => {
             this.applyStats(data);
             this.gpxId = data.id;
@@ -622,7 +626,7 @@ createApp({
       const formData = new FormData();
       formData.append('gpxfile', file);
       fetch('/api/parse', { method: 'POST', body: formData })
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject())
         .then(data => {
           this.applyStats(data);
           this.gpxId = null;
@@ -1058,7 +1062,7 @@ createApp({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stats: this.stats })
       })
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : Promise.reject())
         .then(data => {
           if (data.text) this.analysisText = marked.parse(data.text);
           else this.analysisText = 'Failed to generate';
