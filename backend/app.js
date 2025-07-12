@@ -207,7 +207,7 @@ app.get("/api/gpx/:id", async (req, res) => {
   const { data: entry, error } = await supabase
     .from(GPX_TABLE)
     .select("path")
-    .eq("user_id", id)
+    .eq("id", id)
     .eq("uid", req.uid)
     .single();
   if (error || !entry) return res.status(404).json({ error: "Not found" });
