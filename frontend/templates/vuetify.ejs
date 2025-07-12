@@ -441,7 +441,7 @@ createApp({
   },
   watch: {
     tab(val) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTabs();
       if (val === 0) {
         this.$nextTick(() => {
           this.initMap();
@@ -461,6 +461,17 @@ createApp({
     }
   },
   methods: {
+    scrollToTabs() {
+      this.$nextTick(() => {
+        const el = this.$refs.tabsTop ? (this.$refs.tabsTop.$el || this.$refs.tabsTop) : null;
+        if (el && el.getBoundingClientRect) {
+          const top = el.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({ top, behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    },
     savePredicted() {
       fetch('/api/predicted', {
         method: 'POST',
