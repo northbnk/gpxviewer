@@ -249,10 +249,18 @@
         </div>
         <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
           <v-row>
-            <v-col cols="12" sm="6" v-for="(value, key) in summaryStats" :key="key">
+            <v-col cols="12" sm="6" v-for="stat in summaryStats" :key="stat.label">
               <v-card>
-                <v-card-title>{{ key }}</v-card-title>
-                <v-card-text class="text-body-1">{{ value }}</v-card-text>
+                <v-card-title class="d-flex justify-space-between">
+                  <span>{{ stat.label }}</span>
+                  <v-tooltip location="top" open-on-click>
+                    <template #activator="{ props }">
+                      <v-icon v-bind="props" class="ml-1" size="small">mdi-help-circle-outline</v-icon>
+                    </template>
+                    <span>{{ stat.help }}</span>
+                  </v-tooltip>
+                </v-card-title>
+                <v-card-text class="text-body-1">{{ stat.value }}</v-card-text>
               </v-card>
             </v-col>
           </v-row>
@@ -454,15 +462,15 @@ createApp({
   },
   computed: {
     summaryStats() {
-      if (!this.stats.trackpoints) return {};
-      return {
-        'トラックポイント数': this.stats.trackpoints.length,
-        '総距離（km）': (this.stats.distance_m/1000).toFixed(2) + ' km',
-        '最高標高': this.stats.highest_elevation_m.toFixed(1) + ' m',
-        '最低標高': this.stats.lowest_elevation_m.toFixed(1) + ' m',
-        '総獲得標高': this.stats.total_gain_m.toFixed(1) + ' m',
-        '総標高損失': this.stats.total_loss_m.toFixed(1) + ' m'
-      };
+      if (!this.stats.trackpoints) return [];
+      return [
+        { label: 'トラックポイント数', value: this.stats.trackpoints.length, help: 'トラックポイント数' },
+        { label: '総距離（km）', value: (this.stats.distance_m/1000).toFixed(2) + ' km', help: '総距離（km）' },
+        { label: '最高標高', value: this.stats.highest_elevation_m.toFixed(1) + ' m', help: '最高標高' },
+        { label: '最低標高', value: this.stats.lowest_elevation_m.toFixed(1) + ' m', help: '最低標高' },
+        { label: '総獲得標高', value: this.stats.total_gain_m.toFixed(1) + ' m', help: '総獲得標高' },
+        { label: '総標高損失', value: this.stats.total_loss_m.toFixed(1) + ' m', help: '総標高損失' }
+      ];
     },
     perKmData() { return this.stats.per_km_elevation || []; },
     rateGroups() { return this.segmentSummary ? this.segmentSummary.segments : []; },
