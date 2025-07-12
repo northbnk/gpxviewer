@@ -257,7 +257,7 @@
                     <template #activator="{ props }">
                       <v-icon v-bind="props" class="ml-1" size="small">mdi-help-circle-outline</v-icon>
                     </template>
-                    <span>{{ stat.help }}</span>
+                    <span v-html="stat.help"></span>
                   </v-tooltip>
                 </v-card-title>
                 <v-card-text class="text-body-1">{{ stat.value }}</v-card-text>
@@ -464,12 +464,12 @@ createApp({
     summaryStats() {
       if (!this.stats.trackpoints) return [];
       return [
-        { label: 'トラックポイント数', value: this.stats.trackpoints.length, help: 'トラックポイント数' },
-        { label: '総距離（km）', value: (this.stats.distance_m/1000).toFixed(2) + ' km', help: '総距離（km）' },
-        { label: '最高標高', value: this.stats.highest_elevation_m.toFixed(1) + ' m', help: '最高標高' },
-        { label: '最低標高', value: this.stats.lowest_elevation_m.toFixed(1) + ' m', help: '最低標高' },
-        { label: '総獲得標高', value: this.stats.total_gain_m.toFixed(1) + ' m', help: '総獲得標高' },
-        { label: '総標高損失', value: this.stats.total_loss_m.toFixed(1) + ' m', help: '総標高損失' }
+        { label: 'トラックポイント数', value: this.stats.trackpoints.length, help: `トレイルランなら 1kmあたり50〜200ポイントくらいが安心<br>ポイント間隔が10m前後ならほぼ問題なし<br>少なすぎる場合は、標高やペース分析の精度が一気に落ちるので注意` },
+        { label: '総距離（km）', value: (this.stats.distance_m/1000).toFixed(2) + ' km', help: 'コースの総距離（km）<br>3D距離ではないので注意' },
+        { label: '最高標高', value: this.stats.highest_elevation_m.toFixed(1) + ' m', help: 'コースでの最高標高地点の標高です' },
+        { label: '最低標高', value: this.stats.lowest_elevation_m.toFixed(1) + ' m', help: 'コースでの最低標高の標高です' },
+        { label: '総獲得標高', value: this.stats.total_gain_m.toFixed(1) + ' m', help: '総獲得標高 = 登りの合計標高差<br>平坦コースでも細かい上りがあれば増える<br>難易度評価やレース準備に超重要' },
+        { label: '総標高損失', value: this.stats.total_loss_m.toFixed(1) + ' m', help: '総標高損失 = 下りの合計標高差<br>平坦コースでも細かい下りがあれば増える<br>難易度評価やレース準備に超重要' }
       ];
     },
     perKmData() { return this.stats.per_km_elevation || []; },
