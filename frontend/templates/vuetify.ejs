@@ -144,6 +144,7 @@
                 </div>
                 <v-file-input label="GPX File" accept=".gpx" v-model="file" @change="onFileChange"></v-file-input>
                 <v-btn color="primary" class="mt-2" @click="submit">アップロード</v-btn>
+                <v-btn color="secondary" class="mt-2 ml-2" @click="loadSample">サンプルで試してみる</v-btn>
                 <div v-if="isDragOver" style="color:#1976d2; font-weight:bold; margin-top:8px;">ここにGPXファイルをドロップ</div>
               </div>
             </v-expansion-panel-text>
@@ -157,7 +158,7 @@
                   <v-text-field v-model="title" label="タイトル"></v-text-field>
                 </v-col>
                 <v-col cols="auto">
-                  <v-btn color="primary" @click="saveGpx">保存</v-btn>
+                  <v-btn color="primary" @click="saveGpx" :disabled="isSample">保存</v-btn>
                 </v-col>
               </v-row>
               <v-divider class="my-2"></v-divider>
@@ -260,6 +261,7 @@
             <v-tab :value="0">地図・高低差</v-tab>
             <v-tab :value="1">統計情報・予測</v-tab>
             <v-tab :value="2">AI分析</v-tab>
+            <v-tab :value="3">コース分析</v-tab>
           </v-tabs>
           <v-window v-model="tab">
             <v-window-item :value="0" class="mt-4">
@@ -326,6 +328,12 @@
               <div>
                 <v-btn color="primary" @click="generateAnalysis">レポートを生成する<br class="mobile-break">（あまりやりすぎると主にお金がかかるので<br class="mobile-break">控えめにお願いします！）</v-btn>
                 <div v-if="analysisText" id="analysisText" class="mt-4 rounded-xl" v-html="analysisText"></div>
+              </div>
+            </v-window-item>
+            <v-window-item :value="3" class="mt-4">
+              <div>
+                <v-btn color="primary" @click="generateCourseAnalysis">コース分析を生成する</v-btn>
+                <div v-if="courseAnalysisText" id="courseAnalysisText" class="mt-4 rounded-xl" v-html="courseAnalysisText"></div>
               </div>
             </v-window-item>
           </v-window>
@@ -424,9 +432,11 @@ createApp({
       uploaderPanel: 0,
       tab: 0,
       analysisText: '',
+      courseAnalysisText: '',
       isDragOver: false,
       title: '',
       gpxId: null,
+      isSample: false,
       deleteDialog: false,
       deleteTarget: null,
       editId: null,
@@ -561,6 +571,7 @@ createApp({
           this.gpxId = g.id;
           this.title = g.title || '';
           this.uploaderPanel = null;
+          this.isSample = false;
         })
         .catch((err) => alert('Failed to load GPX: ' + err.message));
     },
@@ -642,15 +653,16 @@ createApp({
         formData.append('gpxfile', file);
         formData.append('title', this.title);
         fetch('/api/upload', { method: 'POST', body: formData })
-          .then(res => res.ok ? res.json() : Promise.reject())
-          .then(data => {
-            this.applyStats(data);
-            this.gpxId = data.id;
-            this.loadSavedList();
-            this.uploaderPanel = null;
-            this.title = '';
-            this.file = null;
-          })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          this.applyStats(data);
+          this.gpxId = data.id;
+          this.loadSavedList();
+          this.uploaderPanel = null;
+          this.title = '';
+          this.file = null;
+          this.isSample = false;
+        })
           .catch(() => alert('Failed to parse GPX'));
       } else {
         fetch(`/api/gpx/${this.gpxId}`, {
@@ -660,6 +672,7 @@ createApp({
         })
           .then(() => this.loadSavedList())
           .catch(() => {});
+        this.isSample = false;
       }
     },
     parseFile() {
@@ -672,8 +685,25 @@ createApp({
         .then(data => {
           this.applyStats(data);
           this.gpxId = null;
+          this.isSample = false;
         })
         .catch(() => alert('Failed to parse GPX'));
+    },
+    submit() {
+      this.parseFile();
+    },
+    loadSample() {
+      fetch('/api/sample')
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          this.applyStats(data);
+          this.gpxId = null;
+          this.title = '';
+          this.file = null;
+          this.isSample = true;
+          this.uploaderPanel = null;
+        })
+        .catch(() => alert('Failed to load sample'));
     },
     downloadPredicted() {
       const blob = new Blob([JSON.stringify(this.predictedData, null, 2)], { type: 'application/json' });
@@ -1110,6 +1140,20 @@ createApp({
           else this.analysisText = 'Failed to generate';
         })
         .catch(() => { this.analysisText = 'Error generating analysis'; });
+    },
+    generateCourseAnalysis() {
+      this.courseAnalysisText = 'Generating...';
+      fetch('/generate-course-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stats: this.stats })
+      })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          if (data.text) this.courseAnalysisText = marked.parse(data.text);
+          else this.courseAnalysisText = 'Failed to generate';
+        })
+        .catch(() => { this.courseAnalysisText = 'Error generating analysis'; });
     },
     onKmRowClick(_e, row) {
       if (row.start_idx != null && row.end_idx != null) {

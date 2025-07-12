@@ -55,6 +55,43 @@ GPX統計データ: ${JSON.stringify(summary)}
 `;
 }
 
+function buildCoursePrompt(summary) {
+  return `あなたはプロのトレイルランナーであり、かつ中級者・初心者向けのアドバイザーです。
+以下のGPXデータ（距離・累積標高・上昇率・降下率）を分析し、選手が安全かつ効率的に走れるよう以下のアドバイスをまとめてください。
+
+■ コース全体の概要
+- 総距離
+- 累積標高（登り・下り）
+- 最大標高・最低標高
+- 平均勾配
+- テクニカルセクション（岩場、急登、急降下、稜線など）
+
+■ ペース戦略
+- プッシュするポイント（攻めるべき区間）
+- 守るポイント（ペースを抑える区間）
+- セクションごとの推奨ペース（初心者・中級者別に具体的なkmあたり分数）
+
+■ 補給戦略
+- 推奨される水分量（総量と1時間あたり目安）
+- 行動食（補給タイミングとおすすめの種類：ジェル、ソリッド、塩タブレットなど）
+- 電解質の摂取目安
+
+■ 携行装備
+- ウェアや防寒具の選択（天候・標高差を考慮）
+- シューズやポールの使用有無
+- 緊急用装備（ファーストエイド、ライト、エマージェンシーシート）
+
+■ メンタル面のアドバイス
+- 中盤や後半にメンタルを保つコツ
+- 失速しないための意識ポイント
+
+■ 初心者・中級者・上級者向けの共通＆個別アドバイス
+- それぞれに最適化した戦略と注意点
+
+GPX統計データ: ${JSON.stringify(summary)}
+`;
+}
+
 const app = express();
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
@@ -177,6 +214,19 @@ app.post("/api/parse", upload.single("gpxfile"), async (req, res) => {
   }
 });
 
+app.get("/api/sample", (_req, res) => {
+  try {
+    const filePath = path.join(__dirname, "testdata", "kirishimaebino_long13th.gpx");
+    const text = fs.readFileSync(filePath, "utf8");
+    const stats = parseGpx(text);
+    const segmentSummary = analyzeSegments(stats);
+    res.json({ stats, segmentSummary });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load sample" });
+  }
+});
+
 app.get("/api/predicted", (req, res) => {
   res.json({ data: readPredicted() });
 });
@@ -293,6 +343,37 @@ app.post("/generate-analysis", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: buildPrompt(summarizeStats(stats)) }],
+      }),
+    });
+    const data = await response.json();
+    if (!data.choices || !data.choices[0]?.message?.content) {
+      console.error("Invalid OpenAI response:", data);
+      return res.status(500).json({ error: "Invalid response from OpenAI" });
+    }
+    const text = data.choices[0].message.content;
+    res.json({ text });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch analysis" });
+  }
+});
+
+app.post("/generate-course-analysis", async (req, res) => {
+  const stats = req.body.stats;
+  if (!stats) return res.status(400).json({ error: "Missing stats" });
+  augmentStats(stats);
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "OpenAI API key not configured" });
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: buildCoursePrompt(summarizeStats(stats)) }],
       }),
     });
     const data = await response.json();
