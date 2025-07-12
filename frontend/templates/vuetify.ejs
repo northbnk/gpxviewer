@@ -66,6 +66,14 @@
       background-color: #fffbe6;
       max-width: 140px;
     }
+    .mobile-break {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .mobile-break {
+        display: inline;
+      }
+    }
     #waypointStats { overflow-x:auto; }
     #waypointStats table { width:100%; table-layout:fixed; border-collapse:collapse; }
     #waypointStats th { padding:2px 4px; text-align:right; }
@@ -279,7 +287,7 @@
             </v-window-item>
             <v-window-item :value="2" class="mt-4">
               <div>
-                <v-btn color="primary" @click="generateAnalysis">レポートを生成する（あまりやりすぎると主にお金がかかるので控えめにお願いします！）</v-btn>
+                <v-btn color="primary" @click="generateAnalysis">レポートを生成する<br class="mobile-break">（あまりやりすぎると主にお金がかかるので<br class="mobile-break">控えめにお願いします！）</v-btn>
                 <div v-if="analysisText" id="analysisText" class="mt-4 rounded-xl" v-html="analysisText"></div>
               </div>
             </v-window-item>
@@ -465,7 +473,7 @@ createApp({
       this.$nextTick(() => {
         const el = this.$refs.tabsTop ? (this.$refs.tabsTop.$el || this.$refs.tabsTop) : null;
         if (el && el.getBoundingClientRect) {
-          const top = el.getBoundingClientRect().top + window.pageYOffset;
+          const top = el.getBoundingClientRect().top + window.pageYOffset - this.$refs.tabsTop.$el.offsetHeight;
           window.scrollTo({ top, behavior: 'smooth' });
         } else {
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -512,7 +520,7 @@ createApp({
           this.title = g.title || '';
           this.uploaderPanel = null;
         })
-        .catch(() => alert('Failed to load GPX'));
+        .catch((err) => alert('Failed to load GPX: ' + err.message));
     },
     toggleEdit(g) {
       if (this.editId === g.id) {
