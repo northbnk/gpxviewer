@@ -175,6 +175,46 @@ app.get("/vue", async (req, res) => {
   res.render("vue", { googleMapsApiKey: apiKey });
 });
 
+// OAuth sign-in with Supabase
+app.get("/auth/:provider", async (req, res) => {
+  const provider = req.params.provider;
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo:
+        process.env.AUTH_REDIRECT_URL ||
+        `${req.protocol}://${req.get("host")}/auth/callback`,
+    },
+  });
+  if (error || !data?.url) {
+    console.error("OAuth error", error);
+    return res.status(500).send("Auth error");
+  }
+  res.redirect(data.url);
+});
+
+app.get("/auth/callback", (req, res) => {
+  res.render("auth_callback", {
+    supabaseUrl: process.env.SUPABASE_URL || "",
+    supabaseAnonKey:
+      process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || "",
+  });
+});
+
+app.post("/auth/store", async (req, res) => {
+  const { auth_uid } = req.body || {};
+  if (!auth_uid) return res.status(400).json({ error: "Missing auth_uid" });
+  const { error } = await supabase
+    .from("user_meta")
+    .upsert({ auth_uid, uid: req.uid }, { onConflict: "auth_uid" });
+  if (error) {
+    console.error("Failed to store user", error);
+    return res.status(500).json({ error: "Failed" });
+  }
+  await logOperation(req, "auth:link", { auth_uid });
+  res.json({ status: "ok" });
+});
+
 
 
 app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
