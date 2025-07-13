@@ -52,3 +52,13 @@ The example above calculates how many seconds were spent on kilometers where the
 uphill grade was at least 10% and where the downhill grade was at least 10%.
 The result is printed as JSON. The same analysis is available in the web
 interface via the upload form.
+
+### Viewing operation logs
+
+The server records user actions such as uploads, downloads and analysis requests
+in the `log_operation` table. With the Supabase credentials configured you can
+print the most recent entries:
+
+```bash
+node backend/print_logs.js
+```
