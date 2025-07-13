@@ -37,6 +37,8 @@ Waypoints contained in the GPX file are automatically displayed on the map and o
    report describing the run.
 7. Use the "Dark mode" button next to the upload field to switch between light
    and dark themes.
+8. Sign up with Apple or Google. After signing up the application asks for a
+   nickname, which is displayed in the header.
 
 ### Command line analysis
 
