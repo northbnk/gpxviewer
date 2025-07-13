@@ -661,6 +661,7 @@ createApp({
       });
     },
     signup(provider) {
+      this.signupMenu = false;
       window.location.href = `/auth/${provider}`;
     },
     fetchNickname() {
