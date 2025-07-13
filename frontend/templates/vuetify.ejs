@@ -91,6 +91,16 @@
       background: #fff;
       padding: 24px 28px;
     }
+    #courseAnalysisText {
+      max-width: 650px;
+      margin: 32px auto 0 auto;
+      border: 2px solid #e0e0e0;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.08);
+      background: #fff;
+      padding: 24px 28px;
+    }
+    .intro-list { padding-left: 1.2rem; }
     .drop-area {
       padding: 16px;
       border-radius: 12px;
@@ -124,6 +134,10 @@
           <img src="/assets/header.png" style="width:242px;height:50px;vertical-align:middle;margin-right:8px;">
         </div>
       </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn icon @click="introDialog = true">
+        <v-icon>mdi-help-circle-outline</v-icon>
+      </v-btn>
     </v-app-bar>
     <v-main>
       <v-container class="mt-4">
@@ -214,7 +228,7 @@
             </p>
             <span class="text-h6">やれること</span>
             <div class="mb-2">
-              <ul class="pl-2">
+              <ul class="pl-2 intro-list">
                 <li >大会やヤマレコ、YAMAPのGPXファイルをアップロード</li>
                 <li >マップや高低差グラフを自動表示</li>
                 <li >セグメント分析や予想ペースの計算</li>
@@ -223,13 +237,13 @@
               </ul>
             </div>
             <span class="text-h6">便利な使い方</span>
-            <ul class="pl-2">
+            <ul class="pl-2 intro-list">
               <li >自身のペースファイルをダウンロードして保存</li>
               <li >大会コースや山行ルートのGPXファイルをアップロードし、シミュレーション</li>
               <li >想定ペースと自身のペースファイルを組み合わせて、どれくらいのタイムで行けるかを可視化</li>
             </ul>
             <span class="text-h6">このサービスを作った理由</span>
-            <ul class="pl-2">
+            <ul class="pl-2 intro-list">
               <li >GPXファイルだけでは、自分が「どれくらいのペースで走ったか」が分かりにくい</li>
               <li >大会の目標設定や、当日のペース配分の目安が立てづらい</li>
               <li >ランニングや登山のログをもっと手軽に、楽しく分析できるようにしたい</li>
@@ -247,8 +261,9 @@
           GPXファイルをアップロードしてください。
         </v-alert>
         </div>
-        <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
-          <v-row>
+      <div v-if="stats.trackpoints && stats.trackpoints.length" class="mt-6">
+        <div class="mb-2 text-subtitle-1">GPXファイル名：{{ stats.name }}</div>
+        <v-row>
             <v-col cols="12" sm="6" v-for="stat in summaryStats" :key="stat.label">
               <v-card>
                 <v-card-title class="d-flex justify-space-between">
@@ -287,6 +302,27 @@
             <v-window-item :value="1" class="mt-4">
               <h2>キロ区間分析</h2>
               <v-data-table :items="perKmData" :headers="perKmHeaders" class="mb-4 perkm-table" density="compact" @click:row="onKmRowClick">
+                <template #header.actual_time>
+                  所要時間
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-icon v-bind="props" color="yellow-darken-2" size="small">mdi-alert</v-icon>
+                    </template>
+                    大会コースのGPXファイルは所要時間が正確に反映されないことがあります。
+                  </v-tooltip>
+                </template>
+                <template v-slot:item.gain="{ item }">
+                  {{ Number(item.raw.gain).toFixed(2) }}
+                </template>
+                <template v-slot:item.loss="{ item }">
+                  {{ Number(item.raw.loss).toFixed(2) }}
+                </template>
+                <template v-slot:item.actual_time="{ item }">
+                  {{ item.raw.actual_time }}
+                </template>
+                <template v-slot:item.pred_time="{ item }">
+                  {{ item.raw.pred_time }}
+                </template>
                 <template v-slot:item.trend="{ item }">
                   <span v-html="item.raw.trend"></span>
                 </template>
@@ -297,10 +333,14 @@
                   <span v-html="item.raw.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
+                  <div :class="item.raw.avg_net_rate == null ? 'text-center' : 'text-end'">
+                    {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
+                  </div>
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  {{ item.raw.avg_pace == null ? '-' : Number(item.raw.avg_pace).toFixed(2) }}
+                  <div class="text-center">
+                    {{ formatPace(item.raw.avg_pace) }}
+                  </div>
                 </template>
               </v-data-table>
               <div class="d-flex mb-4">
@@ -312,10 +352,12 @@
                   <span v-html="item.raw.trend"></span>
                 </template>
                 <template v-slot:item.avg_net_rate="{ item }">
-                  {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
+                  <div :class="item.raw.avg_net_rate == null ? 'text-center' : 'text-end'">
+                    {{ item.raw.avg_net_rate == null ? '-' : Number(item.raw.avg_net_rate).toFixed(2) }}
+                  </div>
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  <v-text-field v-model.number="item.raw.avg_pace" type="number" density="compact" hide-details class="editable-input" @change="computePredictedTimes"></v-text-field>
+                  <v-text-field v-model="item.raw.avg_pace_str" density="compact" hide-details class="editable-input text-center" @change="onPaceInput(item)"></v-text-field>
                 </template>
               </v-data-table>
               <input type="file" ref="predFileInput" accept=".json" style="display:none" @change="onPredFileChange">
@@ -478,19 +520,19 @@ createApp({
     perKmHeaders() {
       return [
         { title: 'キロ', key: 'km' },
-        { title: '上昇 (m)', key: 'gain' },
-        { title: '降下 (m)', key: 'loss' },
-        { title: '所要時間', key: 'actual_time' },
-        { title: '予想時間', key: 'pred_time' },
+        { title: '上昇 (m)', key: 'gain', align:'end' },
+        { title: '降下 (m)', key: 'loss', align:'end' },
+        { title: '所要時間', key: 'actual_time', align:'center' },
+        { title: '予想時間', key: 'pred_time', align:'center' },
         { title: '', key: 'trend', sortable: false }
       ];
     },
     rateHeaders() {
       return [
         { title: '', key: 'trend', sortable: false },
-        { title: '勾配グループ', key: 'label' },
-        { title: '平均上昇降下率(%)', key: 'avg_net_rate' },
-        { title: '平均ペース (min/km)', key: 'avg_pace' }
+        { title: '勾配グループ', key: 'label', sortable: false },
+        { title: '平均上昇降下率(%)', key: 'avg_net_rate', align:'end', sortable: false },
+        { title: '平均ペース (min/km)', key: 'avg_pace', align:'center', sortable: false }
       ];
     },
     segmentHeaders() {
@@ -556,7 +598,8 @@ createApp({
             this.predictedData = data.map(r => ({
               ...r,
               avg_net_rate: r.avg_net_rate == null ? null : Number(r.avg_net_rate),
-              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace)
+              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace),
+              avg_pace_str: this.formatPace(r.avg_pace)
             }));
             this.addTrendInfo(this.predictedData);
             this.computePredictedTimes();
@@ -637,6 +680,7 @@ createApp({
       this.predictedData.forEach(r => {
         r.avg_net_rate = r.avg_net_rate == null ? null : Number(r.avg_net_rate);
         r.avg_pace = r.avg_pace == null ? null : Number(r.avg_pace);
+        r.avg_pace_str = this.formatPace(r.avg_pace);
       });
       this.addTrendInfo(this.stats.per_km_elevation);
       if (this.segmentSummary && this.segmentSummary.summary) this.addTrendInfo(this.segmentSummary.summary);
@@ -694,6 +738,7 @@ createApp({
           this.applyStats(data);
           this.gpxId = null;
           this.isSample = false;
+          this.title = this.stats.name || '';
         })
         .catch(() => alert('Failed to parse GPX'));
     },
@@ -706,7 +751,7 @@ createApp({
         .then(data => {
           this.applyStats(data);
           this.gpxId = null;
-          this.title = '';
+          this.title = this.stats.name || '';
           this.file = null;
           this.isSample = true;
           this.uploaderPanel = null;
@@ -736,7 +781,8 @@ createApp({
             this.predictedData = data.map(r => ({
               ...r,
               avg_net_rate: r.avg_net_rate == null ? null : Number(r.avg_net_rate),
-              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace)
+              avg_pace: r.avg_pace == null ? null : Number(r.avg_pace),
+              avg_pace_str: this.formatPace(r.avg_pace)
             }));
             this.addTrendInfo(this.predictedData);
           }
@@ -860,7 +906,7 @@ createApp({
       const self = this;
       this.chart = Vue.markRaw(new Chart(ctx, {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: 'blue', fill: false, pointRadius: 0 }] },
+        data: { labels, datasets: [{ label: 'Elevation', data: elev, borderColor: '#5c6e82', borderWidth: 2, fill: false, pointRadius: 0 }] },
         options: {
           responsive: true,
           interaction: { mode: 'nearest', intersect: false },
@@ -906,12 +952,18 @@ createApp({
         if (els.length) this.addWaypoint(els[0].index);
       });
     },
-    formatTime(sec) {
+   formatTime(sec) {
+     if (sec == null) return '-';
+     const h = Math.floor(sec / 3600);
+     const m = Math.floor((sec % 3600) / 60);
+     const s = Math.round(sec % 60);
+     return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
+   },
+    formatTimeShort(sec) {
       if (sec == null) return '-';
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
+      const m = Math.floor(sec / 60);
       const s = Math.round(sec % 60);
-      return (h ? h + 'h ' : '') + m + 'm ' + s + 's';
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     },
     predictedTimeSeconds(dist, netRate) {
       if (!this.predictedData || !this.predictedData.length) return null;
@@ -921,6 +973,23 @@ createApp({
       const grp = this.predictedData.find(g => g.label === range.label);
       if (!grp || grp.avg_pace == null) return null;
       return (dist / 1000) * grp.avg_pace * 60;
+    },
+    formatPace(minPerKm) {
+      if (minPerKm == null || Number.isNaN(minPerKm)) return '-';
+      const m = Math.floor(minPerKm);
+      const s = Math.round((minPerKm - m) * 60);
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    },
+    stringToPace(str) {
+      if (!str) return null;
+      const parts = str.split(':');
+      if (parts.length === 2) {
+        const m = parseInt(parts[0]);
+        const s = parseInt(parts[1]);
+        if (!Number.isNaN(m) && !Number.isNaN(s)) return m + s / 60;
+      }
+      const num = parseFloat(str);
+      return Number.isNaN(num) ? null : num;
     },
     predictedTime(dist, netRate) {
       const sec = this.predictedTimeSeconds(dist, netRate);
@@ -983,8 +1052,8 @@ createApp({
           const net = avgUp - avgDown;
           row.actual_time_s = row.duration_s;
           row.pred_time_s = this.predictedTimeSeconds(dist, net);
-          row.actual_time = this.formatTime(row.actual_time_s);
-          row.pred_time = this.formatTime(row.pred_time_s);
+          row.actual_time = this.formatTimeShort(row.actual_time_s);
+          row.pred_time = this.formatTimeShort(row.pred_time_s);
         }
       });
       this.splitTimes = [];
@@ -992,10 +1061,10 @@ createApp({
       (this.stats.per_km_elevation || []).forEach((row, idx) => {
         if (row.pred_time_s != null) cum += row.pred_time_s;
         if ((idx + 1) % 5 === 0) {
-          this.splitTimes.push({ distance: `${idx + 1} km`, time: this.formatTime(cum) });
+          this.splitTimes.push({ distance: `${idx + 1} km`, time: this.formatTimeShort(cum) });
         }
       });
-      this.splitTimes.push({ distance: 'Finish', time: this.formatTime(cum) });
+      this.splitTimes.push({ distance: 'Finish', time: this.formatTimeShort(cum) });
     },
     nearestIndex(lat, lng) {
       let best = 0;
@@ -1008,6 +1077,11 @@ createApp({
         if (d < bestDist) { bestDist = d; best = i; }
       }
       return best;
+    },
+    onPaceInput(item) {
+      item.raw.avg_pace = this.stringToPace(item.raw.avg_pace_str);
+      this.computePredictedTimes();
+      this.savePredicted();
     },
     updateHighlight(idx) {
       if (!this.stats.trackpoints || !this.stats.trackpoints[idx]) return;
@@ -1107,7 +1181,7 @@ createApp({
       } else {
         this.chart.data.datasets[1].data = data;
       }
-      this.chart.update();
+      this.chart.update('none');
     },
     loadPredefinedWaypoints() {
       (this.stats.waypoints || []).forEach(wp => {
