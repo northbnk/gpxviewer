@@ -157,19 +157,21 @@ function writePredicted(data) {
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "..", "frontend", "templates"));
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   const apiKey =
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.GOOGLEMAPS_API_KEY ||
     process.env.GOOGLE_MAP_API_KEY;
+  await logOperation(req, "view:index");
   res.render("vuetify", { googleMapsApiKey: apiKey });
 });
 
-app.get("/vue", (req, res) => {
+app.get("/vue", async (req, res) => {
   const apiKey =
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.GOOGLEMAPS_API_KEY ||
     process.env.GOOGLE_MAP_API_KEY;
+  await logOperation(req, "view:vue");
   res.render("vue", { googleMapsApiKey: apiKey });
 });
 
