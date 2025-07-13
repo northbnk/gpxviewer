@@ -215,6 +215,47 @@ app.post("/auth/store", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/auth/me", async (req, res) => {
+  const { data, error } = await supabase
+    .from("user_meta")
+    .select("nickname")
+    .eq("uid", req.uid)
+    .single();
+  if (error && error.code !== "PGRST116") {
+    console.error("Failed to fetch user", error);
+    return res.status(500).json({ error: "Failed" });
+  }
+  res.json({
+    nickname: data ? data.nickname : null,
+    registered: !!data,
+  });
+});
+
+app.post("/auth/nickname", async (req, res) => {
+  const nickname = (req.body.nickname || "").trim();
+  if (!nickname) return res.status(400).json({ error: "Invalid nickname" });
+
+  const { data: existing, error: fetchErr } = await supabase
+    .from("user_meta")
+    .select("auth_uid")
+    .eq("uid", req.uid)
+    .single();
+  if (fetchErr || !existing) {
+    return res.status(400).json({ error: "Not signed up" });
+  }
+
+  const { error: updateErr } = await supabase
+    .from("user_meta")
+    .update({ nickname })
+    .eq("uid", req.uid);
+  if (updateErr) {
+    console.error("Failed to save nickname", updateErr);
+    return res.status(500).json({ error: "Failed" });
+  }
+  await logOperation(req, "auth:nickname");
+  res.json({ status: "ok" });
+});
+
 
 
 app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
