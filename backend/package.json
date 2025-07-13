@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node app.js",
-    "test": "node test_gpxutils.js"
+    "test": "node test_gpxutils.js",
+    "logs": "node print_logs.js"
   },
   "dependencies": {
     "ejs": "^3.1.9",
