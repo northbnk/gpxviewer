@@ -312,7 +312,10 @@
                 <a href="#" @click.prevent="tab = 1" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
               </div>
               <div class="d-flex justify-end mb-2">
-                <v-switch v-model="useGsi" hide-details density="compact" label="国土地理院"></v-switch>
+                <v-btn-toggle v-model="useGsi" mandatory divided>
+                  <v-btn :value="true">国土地理院</v-btn>
+                  <v-btn :value="false">GoogleMap</v-btn>
+                </v-btn-toggle>
               </div>
               <div id="map" class="mb-4"></div>
               <div class="color-legend mb-2">
@@ -493,7 +496,7 @@ createApp({
       waypoints: [],
       wpMarkers: [],
       mapType: 'google',
-      useGsi: false,
+      useGsi: true,
       ranges: [
         { label: '-50% -    ', min: -Infinity, max: -50 },
         { label: '-50% - -40%', min: -50, max: -40 },
