@@ -122,6 +122,23 @@
       border-color: #1976d2 !important;
       background: #e3f2fd;
     }
+    .color-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .color-legend-item {
+      display: flex;
+      align-items: center;
+    }
+    .color-box {
+      width: 20px;
+      height: 12px;
+      border: 1px solid #999;
+      margin-right: 4px;
+    }
   </style>
   <%- include('_favicon.ejs') %>
 </head>
@@ -293,6 +310,12 @@
                 <a href="#" @click.prevent="tab = 1" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
               </div>
               <div id="map" class="mb-4"></div>
+              <div class="color-legend mb-2">
+                <div v-for="item in slopeLegend" :key="item.label" class="color-legend-item">
+                  <span class="color-box" :style="{ backgroundColor: item.color }"></span>
+                  <span>{{ item.label }}</span>
+                </div>
+              </div>
               <canvas id="chart"></canvas>
               <div class="mt-4">
                 <v-btn color="primary" size="small" class="mb-2" @click="clearWaypoints">クリア</v-btn>
@@ -478,6 +501,16 @@ createApp({
         { label: '30% -  40%', min: 30, max: 40 },
         { label: '40% -  50%', min: 40, max: 50 },
         { label: '50% -    ', min: 50, max: Infinity }
+      ],
+      slopeLegend: [
+        { color: '#B000FF', label: '8%以上' },
+        { color: '#FF0033', label: '5〜8%' },
+        { color: '#FF8000', label: '2〜5%' },
+        { color: '#FFFF00', label: '1〜2%' },
+        { color: '#00FFFF', label: '-1〜1%' },
+        { color: '#0080FF', label: '-5〜-1%' },
+        { color: '#00FFCC', label: '-8〜-5%' },
+        { color: '#0099FF', label: '-8%以下' }
       ],
       uploaderPanel: 0,
       tab: 0,
