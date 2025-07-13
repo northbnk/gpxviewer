@@ -13,6 +13,8 @@
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.6/dist/vuetify-labs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <style>
     #map { height: 400px; }
     #chart { height: 150px; max-height: 400px; }
@@ -309,6 +311,9 @@
                 <span class="material-symbols-outlined" style="vertical-align:middle">info</span>
                 <a href="#" @click.prevent="tab = 1" style="vertical-align:middle">統計情報やセグメント分析、予想ペースを詳しく見る</a>
               </div>
+              <div class="d-flex justify-end mb-2">
+                <v-switch v-model="useGsi" hide-details density="compact" label="国土地理院"></v-switch>
+              </div>
               <div id="map" class="mb-4"></div>
               <div class="color-legend mb-2">
                 <div v-for="item in slopeLegend" :key="item.label" class="color-legend-item">
@@ -487,6 +492,8 @@ createApp({
       trackPolylines: [],
       waypoints: [],
       wpMarkers: [],
+      mapType: 'google',
+      useGsi: false,
       ranges: [
         { label: '-50% -    ', min: -Infinity, max: -50 },
         { label: '-50% - -40%', min: -50, max: -40 },
@@ -601,6 +608,9 @@ createApp({
         this.savePredicted();
       },
       deep: true
+    },
+    useGsi(val) {
+      this.$nextTick(() => this.initMap());
     }
   },
   methods: {
@@ -720,7 +730,9 @@ createApp({
       this.addTrendInfo(this.predictedData);
       this.computePredictedTimes();
       this.waypoints = [];
-      this.wpMarkers.forEach(m => m.setMap(null));
+      this.wpMarkers.forEach(m => {
+        if (this.mapType === 'google') m.setMap(null); else if (this.map) this.map.removeLayer(m);
+      });
       this.wpMarkers = [];
       this.$nextTick(() => {
         this.initMap();
@@ -849,23 +861,69 @@ createApp({
     initMap() {
       const mapDiv = document.getElementById('map');
       if (!mapDiv) return;
-      if (!this.stats.trackpoints || !this.stats.trackpoints.length || !window.google) return;
-      if (this.startMarker) { this.startMarker.setMap(null); this.startMarker = null; }
-      if (this.finishMarker) { this.finishMarker.setMap(null); this.finishMarker = null; }
-      this.trackPolylines.forEach(p => p.setMap(null));
+      if (!this.stats.trackpoints || !this.stats.trackpoints.length) return;
+      // cleanup existing map artifacts
+      if (this.mapType === 'leaflet' && this.map) {
+        this.map.remove();
+      }
+      if (this.startMarker) {
+        if (this.mapType === 'google') this.startMarker.setMap(null); else this.map.removeLayer(this.startMarker);
+        this.startMarker = null;
+      }
+      if (this.finishMarker) {
+        if (this.mapType === 'google') this.finishMarker.setMap(null); else this.map.removeLayer(this.finishMarker);
+        this.finishMarker = null;
+      }
+      if (this.marker) {
+        if (this.mapType === 'google') this.marker.setMap(null); else this.map.removeLayer(this.marker);
+        this.marker = null;
+      }
+      if (this.rangePolyline) {
+        if (this.mapType === 'google') this.rangePolyline.setMap(null); else this.map.removeLayer(this.rangePolyline);
+        this.rangePolyline = null;
+      }
+      this.trackPolylines.forEach(p => {
+        if (this.mapType === 'google') p.setMap(null); else this.map.removeLayer(p);
+      });
       this.trackPolylines = [];
+      this.wpMarkers.forEach(m => {
+        if (this.mapType === 'google') m.setMap(null); else this.map.removeLayer(m);
+      });
+      this.wpMarkers = [];
       const path = this.stats.trackpoints.map(p => ({ lat: p[0], lng: p[1] }));
-      this.map = Vue.markRaw(new google.maps.Map(mapDiv, {
-        zoom: 14,
-        center: path[0],
-        zoomControl: true,
-        scrollwheel: true,
-        gestureHandling: 'greedy',
-        mapTypeId: 'terrain'
-      }));
-      const bounds = new google.maps.LatLngBounds();
-      path.forEach(p => bounds.extend(p));
-      this.map.fitBounds(bounds);
+
+      if (this.useGsi) {
+        this.mapType = 'leaflet';
+        this.map = Vue.markRaw(L.map(mapDiv));
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '地理院タイル'
+        }).addTo(this.map);
+        const bounds = L.latLngBounds(path.map(p => [p.lat, p.lng]));
+        this.map.fitBounds(bounds);
+      } else {
+        if (!window.google) return;
+        this.mapType = 'google';
+        this.map = Vue.markRaw(new google.maps.Map(mapDiv, {
+          zoom: 14,
+          center: path[0],
+          zoomControl: true,
+          scrollwheel: true,
+          gestureHandling: 'greedy',
+          mapTypeId: 'terrain'
+        }));
+        const gsiMap = new google.maps.ImageMapType({
+          getTileUrl: (coord, zoom) =>
+            `https://cyberjapandata.gsi.go.jp/xyz/std/${zoom}/${coord.x}/${coord.y}.png`,
+          tileSize: new google.maps.Size(256, 256),
+          maxZoom: 18,
+          name: 'GSI'
+        });
+        this.map.mapTypes.set('gsi', gsiMap);
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach(p => bounds.extend(p));
+        this.map.fitBounds(bounds);
+      }
       // Group multiple points into a single colored segment to avoid creating
       // thousands of individual polylines which can slow down rendering.
       // Use smaller segments so the color changes are more fine grained
@@ -887,37 +945,72 @@ createApp({
         segments.push({ path: segPath, color });
       }
       segments.forEach(seg => {
-        const poly = new google.maps.Polyline({
-          path: seg.path,
-          map: this.map,
-          strokeColor: seg.color,
-          strokeOpacity: 1,
-          strokeWeight: 6
-        });
-        poly.addListener('mousemove', e => {
+        if (this.mapType === 'google') {
+          const poly = new google.maps.Polyline({
+            path: seg.path,
+            map: this.map,
+            strokeColor: seg.color,
+            strokeOpacity: 1,
+            strokeWeight: 6
+          });
+          poly.addListener('mousemove', e => {
+            const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+            this.updateHighlight(idx);
+          });
+          poly.addListener('click', e => {
+            const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
+            this.addWaypoint(idx);
+          });
+          this.trackPolylines.push(poly);
+        } else {
+          const poly = L.polyline(seg.path.map(p => [p.lat, p.lng]), {
+            color: seg.color,
+            weight: 6,
+            opacity: 1
+          }).addTo(this.map);
+          poly.on('mousemove', e => {
+            const idx = this.nearestIndex(e.latlng.lat, e.latlng.lng);
+            this.updateHighlight(idx);
+          });
+          poly.on('click', e => {
+            const idx = this.nearestIndex(e.latlng.lat, e.latlng.lng);
+            this.addWaypoint(idx);
+          });
+          this.trackPolylines.push(poly);
+        }
+      });
+      if (this.mapType === 'google') {
+        this.marker = Vue.markRaw(new google.maps.Marker({ map: this.map }));
+        this.startMarker = Vue.markRaw(new google.maps.Marker({ position: path[0], map: this.map, label: 'S' }));
+        this.finishMarker = Vue.markRaw(new google.maps.Marker({ position: path[path.length - 1], map: this.map, label: 'F' }));
+        this.map.addListener('mousemove', e => {
           const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
           this.updateHighlight(idx);
         });
-        poly.addListener('click', e => {
+        this.map.addListener('click', e => {
           const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
           this.addWaypoint(idx);
         });
-        this.trackPolylines.push(poly);
-      });
-      this.marker = Vue.markRaw(new google.maps.Marker({ map: this.map }));
-      this.startMarker = Vue.markRaw(new google.maps.Marker({ position: path[0], map: this.map, label: 'S' }));
-      this.finishMarker = Vue.markRaw(new google.maps.Marker({ position: path[path.length - 1], map: this.map, label: 'F' }));
-      this.map.addListener('mousemove', e => {
-        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
-        this.updateHighlight(idx);
-      });
-      this.map.addListener('click', e => {
-        const idx = this.nearestIndex(e.latLng.lat(), e.latLng.lng());
-        this.addWaypoint(idx);
-      });
+      } else {
+        this.marker = L.marker(path[0]).addTo(this.map);
+        this.startMarker = L.marker(path[0], { title: 'S' }).addTo(this.map);
+        this.finishMarker = L.marker(path[path.length - 1], { title: 'F' }).addTo(this.map);
+        this.map.on('mousemove', e => {
+          const idx = this.nearestIndex(e.latlng.lat, e.latlng.lng);
+          this.updateHighlight(idx);
+        });
+        this.map.on('click', e => {
+          const idx = this.nearestIndex(e.latlng.lat, e.latlng.lng);
+          this.addWaypoint(idx);
+        });
+      }
       if (this.stats.waypoints) {
         this.stats.waypoints.forEach(wp => {
-          new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map: this.map, title: wp.name || '' });
+          if (this.mapType === 'google') {
+            new google.maps.Marker({ position: { lat: wp.lat, lng: wp.lon }, map: this.map, title: wp.name || '' });
+          } else {
+            L.marker([wp.lat, wp.lon], { title: wp.name || '' }).addTo(this.map);
+          }
         });
       }
     },
@@ -1119,7 +1212,13 @@ createApp({
     updateHighlight(idx) {
       if (!this.stats.trackpoints || !this.stats.trackpoints[idx]) return;
       if (this.marker) {
-        this.marker.setPosition({ lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] });
+        const lat = this.stats.trackpoints[idx][0];
+        const lng = this.stats.trackpoints[idx][1];
+        if (this.mapType === 'google' && this.marker.setPosition) {
+          this.marker.setPosition({ lat, lng });
+        } else if (this.marker.setLatLng) {
+          this.marker.setLatLng([lat, lng]);
+        }
       }
       if (this.chart) {
         this.chart.setActiveElements([{ datasetIndex: 0, index: idx }]);
@@ -1136,17 +1235,30 @@ createApp({
         for (let i = startIdx; i <= endIdx; i++) {
           path.push({ lat: this.stats.trackpoints[i][0], lng: this.stats.trackpoints[i][1] });
         }
-        if (!this.rangePolyline) {
-          this.rangePolyline = Vue.markRaw(new google.maps.Polyline({
-            path,
-            map: this.map,
-            strokeColor: 'red',
-            strokeOpacity: 0.8,
-            strokeWeight: 6
-          }));
+        if (this.mapType === 'google') {
+          if (!this.rangePolyline) {
+            this.rangePolyline = Vue.markRaw(new google.maps.Polyline({
+              path,
+              map: this.map,
+              strokeColor: 'red',
+              strokeOpacity: 0.8,
+              strokeWeight: 6
+            }));
+          } else {
+            this.rangePolyline.setPath(path);
+            this.rangePolyline.setMap(this.map);
+          }
         } else {
-          this.rangePolyline.setPath(path);
-          this.rangePolyline.setMap(this.map);
+          if (!this.rangePolyline) {
+            this.rangePolyline = L.polyline(path.map(p => [p.lat, p.lng]), {
+              color: 'red',
+              weight: 6,
+              opacity: 0.8
+            }).addTo(this.map);
+          } else {
+            this.rangePolyline.setLatLngs(path.map(p => [p.lat, p.lng]));
+            this.rangePolyline.addTo(this.map);
+          }
         }
       }
     },
@@ -1228,8 +1340,13 @@ createApp({
         this.waypoints.push(idx);
         this.waypoints.sort((a,b) => a-b);
         if (this.map) {
-          const marker = Vue.markRaw(new google.maps.Marker({ position: { lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] }, map: this.map, label: String(this.waypoints.indexOf(idx)+1) }));
-          this.wpMarkers.push(marker);
+          if (this.mapType === 'google') {
+            const marker = Vue.markRaw(new google.maps.Marker({ position: { lat: this.stats.trackpoints[idx][0], lng: this.stats.trackpoints[idx][1] }, map: this.map, label: String(this.waypoints.indexOf(idx)+1) }));
+            this.wpMarkers.push(marker);
+          } else {
+            const marker = L.marker([this.stats.trackpoints[idx][0], this.stats.trackpoints[idx][1]], { title: String(this.waypoints.indexOf(idx)+1) }).addTo(this.map);
+            this.wpMarkers.push(marker);
+          }
         }
         this.updateSegments();
         this.updateWaypointDataset();
@@ -1237,7 +1354,9 @@ createApp({
     },
     clearWaypoints() {
       this.waypoints = [];
-      this.wpMarkers.forEach(m => m.setMap(null));
+      this.wpMarkers.forEach(m => {
+        if (this.mapType === 'google') m.setMap(null); else this.map.removeLayer(m);
+      });
       this.wpMarkers = [];
       this.updateSegments();
       this.updateWaypointDataset();
