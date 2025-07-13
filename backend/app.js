@@ -129,6 +129,7 @@ app.use(ensureUid);
 async function logOperation(req, operation, details = {}) {
   try {
     const { error } = await supabase.from(LOG_TABLE).insert({
+      id: req.id,
       uid: req.uid,
       operation,
       details: JSON.stringify(details),
