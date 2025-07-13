@@ -762,10 +762,10 @@ createApp({
     if (rate > 5) return '#FF0033'; // ビビッドレッド
     if (rate > 2) return '#FF8000'; // 蛍光オレンジ
     if (rate > 1) return '#FFFF00'; // 蛍光イエロー
-    if (rate >= -1) return '#00FFFF'; // 蛍光ブルー（水色）
-    if (rate > -5) return '#0080FF'; // ビビッドブルー
-    if (rate > -8) return '#00FFCC'; // 蛍光シアン
-    return '#0099FF';
+    if (rate >= -1) return '#0080FF'; // 蛍光ブルー（水色）
+    if (rate > -5) return '#99FFFF'; // ビビッドブルー
+    if (rate > -8) return '#CCFFFF'; // 蛍光シアン
+    return '#F0FFFF';
     },
     initMap() {
       const mapDiv = document.getElementById('map');
