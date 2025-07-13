@@ -371,7 +371,7 @@
                   </div>
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  <div class="text-center">
+                  <div :class="item.raw.avg_pace == null ? 'text-center' : 'text-end'">
                     {{ formatPace(item.raw.avg_pace) }}
                   </div>
                 </template>
@@ -390,7 +390,9 @@
                   </div>
                 </template>
                 <template v-slot:item.avg_pace="{ item }">
-                  <v-text-field v-model="item.raw.avg_pace_str" density="compact" hide-details class="editable-input text-center" @change="onPaceInput(item)"></v-text-field>
+                  <div class="d-flex justify-end">
+                    <v-text-field v-model="item.raw.avg_pace_str" density="compact" hide-details class="editable-input text-end" input-class="text-end" @change="onPaceInput(item)"></v-text-field>
+                  </div>
                 </template>
               </v-data-table>
               <input type="file" ref="predFileInput" accept=".json" style="display:none" @change="onPredFileChange">
@@ -577,7 +579,7 @@ createApp({
         { title: '', key: 'trend', sortable: false },
         { title: '勾配グループ', key: 'label', sortable: false },
         { title: '平均上昇降下率(%)', key: 'avg_net_rate', align:'end', sortable: false },
-        { title: '平均ペース (min/km)', key: 'avg_pace', align:'center', sortable: false }
+        { title: '平均ペース (min/km)', key: 'avg_pace', align:'end', sortable: false }
       ];
     },
     segmentHeaders() {
