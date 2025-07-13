@@ -148,6 +148,13 @@
 <div id="app">
   <v-app>
     <v-app-bar app color="primary" dark>
+      <v-btn class="rounded-pill ml-2" color="secondary" @click="signupMenu = true">サインアップ</v-btn>
+      <v-menu v-model="signupMenu" activator="parent">
+        <v-list>
+          <v-list-item @click="signup('google')">Google</v-list-item>
+          <v-list-item @click="signup('apple')">Apple</v-list-item>
+        </v-list>
+      </v-menu>
       <v-toolbar-title>
         <div class="pl-10">
           <img src="/assets/header.png" style="width:242px;height:50px;vertical-align:middle;margin-right:8px;">
@@ -538,7 +545,8 @@ createApp({
       deleteTarget: null,
       editId: null,
       editTitleTemp: '',
-      introDialog: false
+      introDialog: false,
+      signupMenu: false
       };
   },
   created() {
@@ -631,6 +639,9 @@ createApp({
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       });
+    },
+    signup(provider) {
+      window.location.href = `/auth/${provider}`;
     },
     savePredicted() {
       fetch('/api/predicted', {
