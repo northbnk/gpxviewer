@@ -148,8 +148,10 @@
 <div id="app">
   <v-app>
     <v-app-bar app color="primary" dark>
-      <v-btn class="rounded-pill ml-2" color="secondary" @click="signupMenu = true">サインアップ</v-btn>
-      <v-menu v-model="signupMenu" activator="parent">
+      <v-menu v-model="signupMenu">
+        <template #activator="{ props }">
+          <v-btn class="rounded-pill ml-2" color="secondary" v-bind="props">サインアップ</v-btn>
+        </template>
         <v-list>
           <v-list-item @click="signup('google')">Google</v-list-item>
           <v-list-item @click="signup('apple')">Apple</v-list-item>
