@@ -316,10 +316,12 @@
               </div>
               <div id="map" class="mb-4"></div>
               <div class="color-legend mb-2">
+                <span>登り：</span>
                 <div v-for="item in slopeLegend" :key="item.label" class="color-legend-item">
                   <span class="color-box" :style="{ backgroundColor: item.color }"></span>
                   <span>{{ item.label }}</span>
                 </div>
+                <span>：下り</span>
               </div>
               <canvas id="chart"></canvas>
               <div class="mt-4">
