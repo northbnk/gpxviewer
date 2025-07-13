@@ -5,6 +5,7 @@ const { parseGpx, summarizeStats } = require("./gpxutils.js");
 let data = fs.readFileSync("testdata/sample.gpx", "utf8");
 let stats = parseGpx(data);
 assert.strictEqual(stats.points, 5);
+assert.strictEqual(stats.name, "Example GPX");
 assert(stats.distance_m > 3900 && stats.distance_m < 4100);
 assert.strictEqual(stats.trackpoints.length, 5);
 assert.strictEqual(stats.per_km_elevation.length, 4);
@@ -43,6 +44,7 @@ stats = parseGpx(data);
 assert.strictEqual(stats.waypoints.length, 2);
 assert.strictEqual(stats.waypoints[0].name, "WP1");
 assert.strictEqual(stats.waypoints[1].name, "WP2");
+assert.strictEqual(stats.name, "Example GPX with WPT");
 
 data = fs.readFileSync("testdata/kirishimaebino_long13th.gpx", "utf8");
 stats = parseGpx(data);

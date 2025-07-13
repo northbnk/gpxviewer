@@ -166,7 +166,14 @@ function calcPerKmStats(trackpoints, step = 100) {
 function parseGpx(text) {
   const { trackpoints, highest, lowest } = extractTrackpoints(text);
   const waypoints = extractWaypoints(text);
-  const stats = { points: trackpoints.length };
+  let name = null;
+  const trkName = /<trk[^>]*>[\s\S]*?<name>([^<]+)<\/name>/i.exec(text);
+  const rteName = /<rte[^>]*>[\s\S]*?<name>([^<]+)<\/name>/i.exec(text);
+  const metaName = /<metadata[^>]*>[\s\S]*?<name>([^<]+)<\/name>/i.exec(text);
+  if (trkName) name = trkName[1].trim();
+  else if (rteName) name = rteName[1].trim();
+  else if (metaName) name = metaName[1].trim();
+  const stats = { points: trackpoints.length, name };
   if (trackpoints.length > 0) {
     const lats = trackpoints.map((p) => p[0]);
     const lons = trackpoints.map((p) => p[1]);
