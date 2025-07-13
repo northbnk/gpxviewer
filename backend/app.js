@@ -14,6 +14,7 @@ const supabase = createClient(
 
 const GPX_TABLE = "gpx_files";
 const GPX_BUCKET = "gpx";
+const LOG_TABLE = "log_operation";
 
 function augmentStats(stats) {
   if (stats.trackpoints && stats.trackpoints.length > 1) {
@@ -125,6 +126,20 @@ function ensureUid(req, res, next) {
 
 app.use(ensureUid);
 
+async function logOperation(req, operation, details = {}) {
+  try {
+    const { error } = await supabase.from(LOG_TABLE).insert({
+      uid: req.uid,
+      operation,
+      details: JSON.stringify(details),
+      created_at: new Date().toISOString(),
+    });
+    if (error) console.error("Failed to log operation", error);
+  } catch (err) {
+    console.error("Failed to log operation", err);
+  }
+}
+
 function readPredicted() {
   try {
     const txt = fs.readFileSync(PRED_DB, "utf8");
@@ -194,6 +209,7 @@ app.post("/api/upload", upload.single("gpxfile"), async (req, res) => {
       return res.status(500).json({ error: "Failed to save metadata" });
     }
 
+    await logOperation(req, "upload", { id, name: req.file.originalname });
     res.json({ id, stats, segmentSummary });
   } catch (err) {
     res.status(400).json({ error: "Failed to parse" });
@@ -208,18 +224,20 @@ app.post("/api/parse", upload.single("gpxfile"), async (req, res) => {
     const text = req.file.buffer.toString();
     const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
+    await logOperation(req, "parse", { name: req.file.originalname });
     res.json({ stats, segmentSummary });
   } catch (err) {
     res.status(400).json({ error: "Failed to parse" });
   }
 });
 
-app.get("/api/sample", (_req, res) => {
+app.get("/api/sample", (req, res) => {
   try {
     const filePath = path.join(__dirname, "testdata", "kirishimaebino_long13th.gpx");
     const text = fs.readFileSync(filePath, "utf8");
     const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
+    logOperation(req, "sample");
     res.json({ stats, segmentSummary });
   } catch (err) {
     console.error(err);
@@ -228,6 +246,7 @@ app.get("/api/sample", (_req, res) => {
 });
 
 app.get("/api/predicted", (req, res) => {
+  logOperation(req, "predicted:get");
   res.json({ data: readPredicted() });
 });
 
@@ -236,6 +255,7 @@ app.post("/api/predicted", (req, res) => {
   if (!Array.isArray(data)) return res.status(400).json({ error: "Invalid data" });
   try {
     writePredicted(data);
+    logOperation(req, "predicted:post");
     res.json({ status: "ok" });
   } catch (err) {
     res.status(500).json({ error: "Failed to save" });
@@ -249,6 +269,7 @@ app.get("/api/gpx", async (req, res) => {
     .eq("uid", req.uid)
     .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: "Failed to fetch list" });
+  logOperation(req, "gpx:list");
   res.json({ data });
 });
 
@@ -276,6 +297,7 @@ app.get("/api/gpx/:id", async (req, res) => {
     const text = await fileData.text();
     const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
+    await logOperation(req, "gpx:get", { id });
     res.json({ stats, segmentSummary });
   } catch (err) {
     res.status(500).json({ error: "Failed to parse" });
@@ -294,6 +316,7 @@ app.patch("/api/gpx/:id", async (req, res) => {
     .eq("id", id)
     .eq("uid", req.uid);
   if (error) return res.status(500).json({ error: "Failed to update" });
+  await logOperation(req, "gpx:update", { id });
   res.json({ status: "ok" });
 });
 
@@ -324,6 +347,7 @@ app.delete("/api/gpx/:id", async (req, res) => {
     return res.status(500).json({ error: "Failed to delete" });
   }
 
+  await logOperation(req, "gpx:delete", { id });
   res.json({ status: "ok" });
 });
 
@@ -351,6 +375,7 @@ app.post("/generate-analysis", async (req, res) => {
       return res.status(500).json({ error: "Invalid response from OpenAI" });
     }
     const text = data.choices[0].message.content;
+    await logOperation(req, "analysis");
     res.json({ text });
   } catch (err) {
     console.error(err);
@@ -382,6 +407,7 @@ app.post("/generate-course-analysis", async (req, res) => {
       return res.status(500).json({ error: "Invalid response from OpenAI" });
     }
     const text = data.choices[0].message.content;
+    await logOperation(req, "course-analysis");
     res.json({ text });
   } catch (err) {
     console.error(err);
