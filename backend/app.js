@@ -236,7 +236,7 @@ app.post("/api/parse", upload.single("gpxfile"), async (req, res) => {
 
 app.get("/api/sample", (req, res) => {
   try {
-    const filePath = path.join(__dirname, "testdata", "kirishimaebino_long13th.gpx");
+    const filePath = path.join(__dirname, "testdata", "mmp8th_long.gpx");
     const text = fs.readFileSync(filePath, "utf8");
     const stats = parseGpx(text);
     const segmentSummary = analyzeSegments(stats);
