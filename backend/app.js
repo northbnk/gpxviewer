@@ -250,6 +250,7 @@ app.get("/auth/callback", (req, res) => {
 });
 
 app.post("/auth/store", async (req, res) => {
+  console.log("/auth/store payload", req.body, "uid", req.uid);
   const { auth_uid } = req.body || {};
   if (!auth_uid) return res.status(400).json({ error: "Missing auth_uid" });
   const { error } = await supabase

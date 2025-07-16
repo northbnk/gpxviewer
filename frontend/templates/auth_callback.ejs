@@ -10,12 +10,14 @@
 const supabase = supabase.createClient('<%= supabaseUrl %>', '<%= supabaseAnonKey %>');
 (async () => {
   const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+  console.log('getSessionFromUrl', data, error);
   if (data && data.session) {
-    await fetch('/auth/store', {
+    const res = await fetch('/auth/store', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ auth_uid: data.session.user.id })
     });
+    console.log('/auth/store response', res.status);
   }
   window.location.href = '/';
 })();
