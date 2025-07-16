@@ -126,6 +126,22 @@ function calcPerKmStats(trackpoints, step = 100) {
     perKm[kmIndex].end_idx = i;
     profile.push([dist, trackpoints[i][2]]);
   }
+
+  const totalKm = Math.ceil(dist / step);
+  for (let k = 0; k < totalKm; k++) {
+    if (!perKm[k]) {
+      perKm[k] = {
+        km: k + 1,
+        gain: 0,
+        loss: 0,
+        start_time: null,
+        end_time: null,
+        start_idx: null,
+        end_idx: null,
+      };
+    }
+  }
+
   perKm.forEach((km) => {
     let st = km.start_time;
     let en = km.end_time;
