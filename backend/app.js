@@ -11,6 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || "",
 );
+const SUPPORTED_PROVIDERS = ["google", "apple"]; // OAuth providers
 
 const GPX_TABLE = "gpx_files";
 const GPX_BUCKET = "gpx";
@@ -94,6 +95,8 @@ GPX統計データ: ${JSON.stringify(summary)}
 }
 
 const app = express();
+// honor X-Forwarded-Proto when behind a reverse proxy
+app.set("trust proxy", true);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 const upload = multer();
@@ -175,46 +178,7 @@ app.get("/vue", async (req, res) => {
   res.render("vue", { googleMapsApiKey: apiKey });
 });
 
-// OAuth sign-in with Supabase
-app.get("/auth/:provider", async (req, res) => {
-  const provider = req.params.provider;
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo:
-        process.env.AUTH_REDIRECT_URL ||
-        `${req.protocol}://${req.get("host")}/auth/callback`,
-    },
-  });
-  if (error || !data?.url) {
-    console.error("OAuth error", error);
-    return res.status(500).send("Auth error");
-  }
-  res.redirect(data.url);
-});
-
-app.get("/auth/callback", (req, res) => {
-  res.render("auth_callback", {
-    supabaseUrl: process.env.SUPABASE_URL || "",
-    supabaseAnonKey:
-      process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || "",
-  });
-});
-
-app.post("/auth/store", async (req, res) => {
-  const { auth_uid } = req.body || {};
-  if (!auth_uid) return res.status(400).json({ error: "Missing auth_uid" });
-  const { error } = await supabase
-    .from("user_meta")
-    .upsert({ auth_uid, uid: req.uid }, { onConflict: "auth_uid" });
-  if (error) {
-    console.error("Failed to store user", error);
-    return res.status(500).json({ error: "Failed" });
-  }
-  await logOperation(req, "auth:link", { auth_uid });
-  res.json({ status: "ok" });
-});
-
+// Fetch current user's nickname
 app.get("/auth/me", async (req, res) => {
   const { data, error } = await supabase
     .from("user_meta")
@@ -253,6 +217,49 @@ app.post("/auth/nickname", async (req, res) => {
     return res.status(500).json({ error: "Failed" });
   }
   await logOperation(req, "auth:nickname");
+  res.json({ status: "ok" });
+});
+
+// OAuth sign-in with Supabase
+app.get("/auth/:provider", async (req, res) => {
+  const provider = req.params.provider;
+  if (!SUPPORTED_PROVIDERS.includes(provider)) {
+    return res.status(400).send("Invalid provider");
+  }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo:
+        process.env.AUTH_REDIRECT_URL ||
+        `${req.protocol}://${req.get("host")}/auth/callback`,
+    },
+  });
+  if (error || !data?.url) {
+    console.error("OAuth error", error);
+    return res.status(500).send("Auth error");
+  }
+  res.redirect(data.url);
+});
+
+app.get("/auth/callback", (req, res) => {
+  res.render("auth_callback", {
+    supabaseUrl: process.env.SUPABASE_URL || "",
+    supabaseAnonKey:
+      process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || "",
+  });
+});
+
+app.post("/auth/store", async (req, res) => {
+  const { auth_uid } = req.body || {};
+  if (!auth_uid) return res.status(400).json({ error: "Missing auth_uid" });
+  const { error } = await supabase
+    .from("user_meta")
+    .upsert({ auth_uid, uid: req.uid }, { onConflict: "auth_uid" });
+  if (error) {
+    console.error("Failed to store user", error);
+    return res.status(500).json({ error: "Failed" });
+  }
+  await logOperation(req, "auth:link", { auth_uid });
   res.json({ status: "ok" });
 });
 
