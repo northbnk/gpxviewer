@@ -11,6 +11,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || "",
 );
+const SUPPORTED_PROVIDERS = ["google", "apple"]; // OAuth providers
 
 const GPX_TABLE = "gpx_files";
 const GPX_BUCKET = "gpx";
@@ -94,6 +95,8 @@ GPX統計データ: ${JSON.stringify(summary)}
 }
 
 const app = express();
+// honor X-Forwarded-Proto when behind a reverse proxy
+app.set("trust proxy", true);
 app.use(express.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 const upload = multer();
@@ -220,6 +223,9 @@ app.post("/auth/nickname", async (req, res) => {
 // OAuth sign-in with Supabase
 app.get("/auth/:provider", async (req, res) => {
   const provider = req.params.provider;
+  if (!SUPPORTED_PROVIDERS.includes(provider)) {
+    return res.status(400).send("Invalid provider");
+  }
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
