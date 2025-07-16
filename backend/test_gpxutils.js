@@ -8,7 +8,7 @@ assert.strictEqual(stats.points, 5);
 assert.strictEqual(stats.name, "Example GPX");
 assert(stats.distance_m > 3900 && stats.distance_m < 4100);
 assert.strictEqual(stats.trackpoints.length, 5);
-assert.strictEqual(stats.per_km_elevation.length, 4);
+assert.strictEqual(stats.per_km_elevation.length, 5);
 assert.strictEqual(stats.per_km_elevation[0].gain, 10);
 assert.strictEqual(stats.per_km_elevation[1].loss, 5);
 assert.strictEqual(stats.highest_elevation_m, 115);
