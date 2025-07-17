@@ -10,6 +10,8 @@
 const { createClient } = supabase;
 const sb = createClient('<%= supabaseUrl %>', '<%= supabaseAnonKey %>');
 (async () => {
+  console.log("SUPABASE_URL:", '<%= supabaseUrl %>');
+  console.log("SUPABASE_ANON_KEY:", '<%= supabaseAnonKey %>');
   const { data, error } = await sb.auth.getSessionFromUrl({ storeSession: true });
   console.log('getSessionFromUrl', data, error);
   if (data && data.session) {
