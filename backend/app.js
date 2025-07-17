@@ -226,6 +226,8 @@ app.get("/auth/:provider", async (req, res) => {
   if (!SUPPORTED_PROVIDERS.includes(provider)) {
     return res.status(400).send("Invalid provider");
   }
+  console.log("🚀 OAuth redirectTo(AUTH_REDIRECT_URL) =", process.env.AUTH_REDIRECT_URL);
+  console.log("🚀 OAuth redirectTo(req) =", `${req.protocol}://${req.get("host")}/auth/callback`);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
@@ -250,8 +252,8 @@ app.get("/auth/callback", (req, res) => {
 });
 
 app.post("/auth/store", async (req, res) => {
-  console.log("/auth/store payload", req.body, "uid", req.uid);
   const { auth_uid } = req.body || {};
+  console.log("auth/store");
   if (!auth_uid) return res.status(400).json({ error: "Missing auth_uid" });
   const { error } = await supabase
     .from("user_meta")
