@@ -236,6 +236,8 @@ app.get("/auth/:provider", async (req, res) => {
         `${req.protocol}://${req.get("host")}/auth/callback`,
     },
   });
+  console.log("🔁 redirectTo:", process.env.AUTH_REDIRECT_URL);
+  console.log("🌐 full URL:", data?.url);
   if (error || !data?.url) {
     console.error("OAuth error", error);
     return res.status(500).send("Auth error");
