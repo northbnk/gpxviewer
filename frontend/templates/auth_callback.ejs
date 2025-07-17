@@ -7,9 +7,10 @@
 </head>
 <body>
 <script>
-const supabase = supabase.createClient('<%= supabaseUrl %>', '<%= supabaseAnonKey %>');
+const { createClient } = supabase;
+const sb = createClient('<%= supabaseUrl %>', '<%= supabaseAnonKey %>');
 (async () => {
-  const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+  const { data, error } = await sb.auth.getSessionFromUrl({ storeSession: true });
   console.log('getSessionFromUrl', data, error);
   if (data && data.session) {
     const res = await fetch('/auth/store', {
