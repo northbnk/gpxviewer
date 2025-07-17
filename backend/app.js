@@ -220,6 +220,15 @@ app.post("/auth/nickname", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+// OAuth callback must come before the generic provider route
+app.get("/auth/callback", (req, res) => {
+  res.render("auth_callback", {
+    supabaseUrl: process.env.SUPABASE_URL || "",
+    supabaseAnonKey:
+      process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || "",
+  });
+});
+
 // OAuth sign-in with Supabase
 app.get("/auth/:provider", async (req, res) => {
   const provider = req.params.provider;
@@ -243,14 +252,6 @@ app.get("/auth/:provider", async (req, res) => {
     return res.status(500).send("Auth error");
   }
   res.redirect(data.url);
-});
-
-app.get("/auth/callback", (req, res) => {
-  res.render("auth_callback", {
-    supabaseUrl: process.env.SUPABASE_URL || "",
-    supabaseAnonKey:
-      process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || "",
-  });
 });
 
 app.post("/auth/store", async (req, res) => {
